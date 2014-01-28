@@ -11,11 +11,222 @@ var search_kd = require('../support').search_kd;
 var search_music = require('../support').search_music;
 var translate_english = require('../support').translate_english;
 var geo2loc = require('../support').geo2loc;
+var support = require('../support');
+var mail = require('nodemailer'); 
+var mongodb = require('mongodb');
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = env['mongodb-1.8'][0]['credentials'];
+}
+else{
+    var mongo = {
+    "hostname":"localhost",
+    "port":27017,
+    "username":"",
+    "password":"",
+    "name":"",
+    "db":"db"
+    }
+}
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = env['mongodb-1.8'][0]['credentials'];
+}
+else{
+    var mongo = {
+    "hostname":"localhost",
+    "port":27017,
+    "username":"",
+    "password":"",
+    "name":"",
+    "db":"mydb"
+    }
+}
+var generate_mongo_url = function(obj){
+        obj.hostname = (obj.hostname || 'localhost');
+        obj.port = (obj.port || 27017);
+        obj.db = (obj.db || 'test');
+        if(obj.username && obj.password){
+            return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    }
+    else{
+        return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    }
+}
+var mongourl = generate_mongo_url(mongo);
 
+function saveToDb() {
+    var server = new mongodb.Server(mongourl), 
+    connect = new mongodb.Db('test', server);
+     
+    connect.open(function(err, db) {
+        db.collection('books', function (err, collection) {
+            collection.find(function (err, cursor) {
+                cursor.each(function (err, doc) {
+                    if (doc) {
+                        console.log('doc.title:' + doc.title);
+                    }
+                });
+            });
+           collection.insert(tankBook);
+        });
+     });
+ }
+
+/*function MyObject(){
+    this.name = "myObject";
+    this.type = "class";
+    this.methodA = function(){
+        alert(this.name);
+    }
+    this.methodB = function(){
+        return this.type;
+    }
+}
+var myObject = new MyObject();
+myObject.methodA();
+var type = myObject.methodB();
+alert(type);*/
+//var hashTable = new support.Hashtable(); 
+var strmail='happylive888@qq.com'
+
+var postmap=[];
+var testinfo={
+    id : 11111,
+    info :{
+        mail :'2669414011@qq.com',
+        status:'',
+        newstatus:'',
+        updatecnt:0,
+        ichknochgcnt:0,
+        iwelcome:1,
+        debugcnt:1,
+    },
+    };
+//var chkstatustime=1000*60*10;
+var chkstatustime=1000*60;
+//postmap.push(testinfo);
+
+mail.SMTP = {  	
+    host: 'smtp.qq.com',  	
+    port: 25,  	
+    use_authentication: true,  	
+    user: strmail, 
+    pass: 'good_1234' 
+ }
+ 
+ function clearString(s){ 
+    var pattern = new RegExp("[`~!@#$^&*()=|{}';',\\[\\].<>/?~！@#￥……&*（）&;|{}‘；：”“'。，、？]") 
+    var rs = ""; 
+    for (var i = 0; i < s.length; i++) { 
+        rs = rs+s.substr(i, 1).replace(pattern, ''); 
+    } 
+    rs=rs.replace(/\ +/g,"");//去掉空格
+    rs=rs.replace(/[ ]/g,"");    //去掉空格
+    rs=rs.replace(/[\r\n]/g,"");//去掉回车换行    
+    return rs;  
+}
+setInterval(function(){
+    for( i in postmap){    
+         if (typeof(postmap[i]) == "undefined") { 
+           continue;
+        }
+        //console.log(i+",id:"+postmap[i].id);     
+
+        //console.log(postmap[i].info.mail); 
+        //console.log(postmap[i].info.status); 
+        //console.log(postmap[i].info.iwelcome); 
+        //console.log("postmap[i].info.updatecnt:"+postmap[i].info.updatecnt); 
+        var mypostmapobj=new Object();  
+        mypostmapobj.context=postmap;
+        autochk=1;
+        var postkey=postmap[i].id.toString();
+        /*if((postmap[i].info.status.indexOf('已签收')>=0)  ||
+            (postmap[i].info.status.indexOf('货物')>=0)){
+            console.log("已签收:"+postmap[i].id); 
+            delete postmap[i];
+            continue;
+        }*/
+        //console.log("zzzz:"+postmap[i].info.status); 
+        //console.log("aaa:"+postmap[i].info.status.indexOf('已收取')); 
+         //检查30天没变化,就不检查了
+        if(postmap[i].info.ichknochgcnt>(6*24*7)){
+            delete postmap[i];
+            continue;
+        }
+        var strsubject='快递【'+postkey+'】更新了,'+postmap[i].info.newstatus;
+        //console.log("postmap[i].info.status.length:"+postmap[i].info.status.length); 
+        if(postmap[i].info.iwelcome==1){
+           strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';
+        }
+        strsubject=clearString(strsubject);
+        search_kd(postkey, null,mypostmapobj,autochk);
+        //console.log("查询:"+postkey); 
+        postmap[i].info.ichknochgcnt++;    
+        tomail=postmap[i].info.mail;    
+        console.log(postmap[i].id+':'+postmap[i].info.iwelcome);         
+        if((postmap[i].info.updatecnt>0 || postmap[i].info.iwelcome) && typeof(tomail) != "undefined" && tomail.length>0){
+            postmap[i].info.ichknochgcnt=0;
+            if(postmap[i].info.iwelcome){
+                postmap[i].info.iwelcome=0;
+            }
+            else{
+                if(postmap[i].info.updatecnt>0)
+                    postmap[i].info.updatecnt--;
+            }
+            //console.log("newstatus:"+postmap[i].info.newstatus); 
+            console.log('begin send mail');
+            mail.send_mail({
+                sender:strmail, //发送邮件的地址
+                to:tomail, //发给谁
+                subject:strsubject,//+postmap[i].info.newstatus, //主题
+                body:postmap[i].info.status+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
+                //html:'<p>hello</p>', //如果要发送html
+                //attachments: null //如果要发送附件
+            },
+            //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
+            function(error,success){
+               if(!error){
+                    console.log('message success');
+               }else{
+                console.log('failed'+error);
+               }
+            });
+        }
+        
+        //console.log(postmap[i].info.status); 
+        //console.log(tmppost['mail']); 
+        //console.log(tmppost['status']); 
+    }
+},chkstatustime);
+
+//console.log('5')
+
+/*
+var arr={a:1,b:2,c:3};
+arr.d = 4;
+var property;
+for(property in arr) {
+    console.log(property + ": " + arr[property]);
+    console.log(arr['a']);
+}*/
 /**
  * 初始化路由规则
  */
 module.exports = exports = function(webot){
+  //var json='{"errcode":0,"msgtype":"music","music":{"title":"Believe","description":"Cher","musicurl":"http:\/\/m1.file.xiami.com\/1\/828\/15828\/137437\/1532606_637166_l.mp3","hqmusicurl":"http:\/\/m1.file.xiami.com\/1\/828\/15828\/137437\/1532606_637166_l.mp3"}}'
+  //var jsonObj=JSON.parse(String(json));
+  //console.log(jsonObj); 
+  //console.log(jsonObj.music.title);
+    
+    /*console.log('1');
+    function test(){
+    setTimeout(function(){console.log('2')},1000);
+    }
+    test();
+    console.log('3');
+    setTimeout(function(){console.log('4')},2000);*/
+
   var reg_help = /^(help|\?)$/i
   webot.set({
     // name 和 description 都不是必须的
@@ -297,22 +508,9 @@ function calcTime(city, offset) {
     handler: do_search
   });
 
-  
-    function do_search_kd(info, next){
-    // pattern的解析结果将放在param里
-    var q = info.param[1];
-    log('searching: ', q);
-    // 从某个地方搜索到数据...
-    return search_kd(q , next);
-  }
 
-  // 可以通过回调返回结果
-  webot.set('search_kd', {
-    description: '发送: kd 关键词 ',
-    pattern: /^(?:快递?|kd|k\d)\k*(.+)/i,
-    //handler也可以是异步的
-    handler: do_search_kd
-  });
+
+
   
   
 
@@ -430,22 +628,43 @@ function calcTime(city, offset) {
   
   
   // 简单的纯文本对话，可以用单独的 yaml 文件来定义
-  require('js-yaml');
-  webot.dialog(__dirname + '/dialog.yaml');
+  //require('js-yaml');
+  //webot.dialog(__dirname + '/dialog.yaml');
+    // 可以通过回调返回结果
+    
+ 
   
    function do_search_allnum_kd(info, next){
     // pattern的解析结果将放在param里
     var q =  info.text;
     log('searching: ', q);
-	console.log(q);  
+	//console.log(q);  
     // 从某个地方搜索到数据...
-    return search_kd(q , next);
+    var mypostmapobj=new Object();  
+    /*var tmp1=[];
+    tmp1.push({
+        id : 12345678,
+        mail :'41473604@qq.com',
+        status:null,
+        });*/
+    mypostmapobj.context=postmap;
+    autochk=0;
+    //var tmp=13;
+    //console.log("index:"+mypostmapobj.context[0].id); 
+    return search_kd(q ,next,mypostmapobj,autochk);
   }
  
    //所有消息都无法匹配时的fallback
   webot.set( 'search_allnum_kd', {
     description: '发送: 全部数字 ',
     pattern: /\d/gi,
+    //handler也可以是异步的
+    handler: do_search_allnum_kd
+  });
+  
+   webot.set('search_kd', {
+    description: '发送: kd 关键词 ',
+    pattern: /^(?:快递?|kd|k\d)\k*(.+)/i,
     //handler也可以是异步的
     handler: do_search_allnum_kd
   });
@@ -462,7 +681,7 @@ function calcTime(city, offset) {
    //所有消息都无法匹配时的fallback
   webot.set( 'search_allnum_music', {
     description: '发送: 全部汉字 ',
-    pattern: /^[\u4e00-\u9fa5]+$/ ,
+    pattern: /^[\u4e00-\u9fa5_a-zA-Z0-9\s]+$/ ,
     //handler也可以是异步的
     handler: do_search_allhans_music
   });
