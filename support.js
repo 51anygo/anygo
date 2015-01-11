@@ -62,7 +62,7 @@ exports.translate_english= function(keyword, cb){
     timeout: mytimeout,
     qs:{}
 	};
-  console.log('options: ' + options.url);
+  //console.log('options: ' + options.url);
   //request.setTimeout(timeout, [callback]);
   request.get(options, function(err, res, body){
     if (err || !body){
@@ -110,7 +110,7 @@ exports.search_music = function(keyword, cb){
     timeout: mytimeout,
     qs:{}
 	};
-    console.log('options: ' + options.url);
+    //console.log('options: ' + options.url);
   request.get(options, function(err, res, body){
   //http://m.kugou.com/weixin/?action=single&filename=%u6076%u9b54%u5976%u7238-%u636e%u8bf4JZ%u4e5f%u5728%u627e%u540d%u5b57S&issoft=1&timelen=294231&chl=qq_client&MicroBlog=2
 //http://m.kugou.com/weixin/?action=single&filename=dreamhigh - loveyou&hash=C112AA214825217A61D04A92F1A923B3&issoft=1&timelen=294231&chl=qq_client&MicroBlog=2
@@ -165,16 +165,36 @@ exports.search_music = function(keyword, cb){
           hqMusicUrl: jsonObj.music.hqmusicurl
         }
     } catch (err) {
-         console.log('err: ' + err)
+         //console.log('err: ' + err)
          return cb(null, nofindmsg);
     }
-    console.log('STATUS: ' + res.statusCode);
-    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    //console.log('STATUS: ' + res.statusCode);
+    //console.log('HEADERS: ' + JSON.stringify(res.headers));
     // 则会生成图文列表
     return cb(null, result);
   });
 };
 
+ //判断字符串所占的字节数
+function GetCharLength(str)
+{    
+    return (new Buffer(str)).length;   //返回字符所占字节数
+}
+//若字符串长度超过要求，截掉多余部分
+function CutStr(str,len)   //elementID表示要进行处理的对象ID,len表示设置的限制字节数
+{
+    
+    var curStr = "";  //用于实时存储字符串
+    for(var i = 0;i<str.length;i++)   //遍历整个字符串
+    {
+        curStr += str.charAt(i);  //记录当前遍历过的所有字符
+        if(GetCharLength(curStr )>len)  //如果当前字符串超过限制长度
+        {
+            str = str.substring(0,i);  //截取多余的字符,并把剩余字符串赋给要进行处理的对象
+            return str;  //结束函数
+        }
+    }
+}      
 
 /**
  * 搜索快递
@@ -185,6 +205,7 @@ exports.search_music = function(keyword, cb){
  * @param  {String}   cb.result     查询结果
  */
 exports.search_kd = function(keyword, cb,postmap,autochk){
+    var intime=new Date().getTime();
     keyword=keyword.replace("  "," ");    //去掉两个的空格
     var strtmp = keyword.split(" ");
     var strmail='';
@@ -249,18 +270,22 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
   if(debugcnt>0){
     mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim()+'&debugcnt='+debugcnt;
   }
-  //console.log('searching: %s,url: %s', keyword,mykdurl);
-
+  ////console.log('searching: %s,url: %s', keyword,mykdurl);
+  var itime=new Date().getTime();
+  var timecount=0;
+  //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
   var options = {
     url: mykdurl,
-    timeout: mytimeout,
+    timeout: (mytimeout-(itime-intime)),
 	//url: 'http://51anygo.sinaapp.com/kuaidi100/get.php?nu='+keyword.trim(),
     qs: {
     }
   };
-  //console.log('options: ' + options.url);
+  ////console.log('options: ' + options.url);
+  //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
   request.get(options, function(err, res, body){     
     if (err || !body){
+        //console.log('err:timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
         if(!autochk)
             return cb(null , '现在暂时无法搜索，待会儿再来好吗？');
     }
@@ -275,6 +300,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     if (typeof(result) == "undefined") { 
        result=""
     }
+    //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
     //console.log("result:"+result); 
     try{
     //修正页面无法访问，报503错误
@@ -291,7 +317,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
         }
     }
     catch (err) {
-         console.log('err: ' + err);
+         //console.log('err: ' + err);
          return cb(null , result);
     }
    
@@ -347,7 +373,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
             },
         });
     }
- 
+    //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
     //}
     if(!autochk){
         if(!setmail){
@@ -359,8 +385,13 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
             result+='\n(请注意打开您微信邮箱提醒功能)'
         }
     }
-	//console.log('STATUS: ' + res.statusCode);
-    //console.log('HEADERS: ' + JSON.stringify(res.headers));
+    if(GetCharLength(result)>=2040){
+    
+       result = CutStr(result,2040);
+       //console.log('trim timecount:%d,new Date().getTime(): %d,result;%d,buff size;%d',++timecount, new Date().getTime(),GetCharLength(result),(new Buffer(result)).length);
+    }
+	////console.log('STATUS: ' + res.statusCode);
+    ////console.log('HEADERS: ' + JSON.stringify(res.headers));
 	/*var pageData = "";
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
