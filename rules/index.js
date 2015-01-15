@@ -72,7 +72,35 @@ function saveToDb() {
         });
      });
  }
+ 
+ 
+ var mongoose = require('mongoose'),
+      Schema = mongoose.Schema;
 
+mongoose.connect('mongodb://localhost/lol', function(err) {
+    if (err) { console.log(err) }
+});
+
+var ChatSchema = new Schema({
+    name: String
+});
+
+mongoose.model('Chat', ChatSchema);
+
+var Chat = mongoose.model('Chat');
+
+/*
+var n = new Chat();
+n.name = "chat room";
+n.save(function(err,room) {
+   console.log('room.id:' +room.id);
+});
+*/
+
+Chat.find(function (err, rooms) {
+  if (err) return console.error(err);
+  console.log('rooms:' +rooms)
+});
 /*function MyObject(){
     this.name = "myObject";
     this.type = "class";
