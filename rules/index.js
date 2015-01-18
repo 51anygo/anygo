@@ -12,6 +12,254 @@ var search_music = require('../support').search_music;
 var translate_english = require('../support').translate_english;
 var geo2loc = require('../support').geo2loc;
 var support = require('../support');
+var mail = require('nodemailer'); 
+var mongodb = require('mongodb');
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = env['mongodb-1.8'][0]['credentials'];
+}
+else{
+    var mongo = {
+    "hostname":"localhost",
+    "port":27017,
+    "username":"",
+    "password":"",
+    "name":"",
+    "db":"db"
+    }
+}
+if(process.env.VCAP_SERVICES){
+    var env = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = env['mongodb-1.8'][0]['credentials'];
+}
+else{
+    var mongo = {
+    "hostname":"localhost",
+    "port":27017,
+    "username":"",
+    "password":"",
+    "name":"",
+    "db":"mydb"
+    }
+}
+var generate_mongo_url = function(obj){
+        obj.hostname = (obj.hostname || 'localhost');
+        obj.port = (obj.port || 27017);
+        obj.db = (obj.db || 'test');
+        if(obj.username && obj.password){
+            return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    }
+    else{
+        return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
+    }
+}
+var mongourl = generate_mongo_url(mongo);
+ 
+
+
+var mongoose = require('mongoose');  
+//For local environment: 
+mongoose.connect(mongourl);
+
+var Schema = mongoose.Schema;
+
+
+
+var KdSchema = new Schema({
+   id        : {type : String,index:true}
+  ,mail      : {type : String,index:true}
+  ,title     : {type : String}
+  ,status    : {type : String}
+  ,newstatus : {type : String}
+  ,updatecnt : {type : Number}
+  ,ichknochgcnt: {type : Number}
+  ,iwelcome: {type : Number}
+  ,debugcnt: {type : Number}
+});
+
+
+
+mongoose.model("Kd", KdSchema);
+
+var Kd = mongoose.model("Kd"); //获得model实例
+
+var blog1 = new Kd();
+blog1.id = 4;
+blog1.title="ully";
+
+
+
+var testinfo = new Kd();
+testinfo.id='12345678';    
+testinfo.mail = '41473064@qq.com';
+testinfo.status='';
+testinfo.newstatus='';
+testinfo.updatecnt=0;
+testinfo.ichknochgcnt=0;
+testinfo.iwelcome=1;
+testinfo.debugcnt=0;
+
+Kd.remove({id:testinfo.id,mail:testinfo.mail},function(err,docs){//删除id为4的记录
+     console.log(docs);
+     console.log('remove success');
+     testinfo.save(function(err) {  //存储
+     if (err) {
+        console.log('save failed');
+     }
+      console.log('save success');
+    });
+
+});
+    
+/*
+Kd.find({id:4},function(err,docs){//查询id为4的记录
+     console.log(docs);
+     console.log('find success');
+});
+
+Kd.update({id:4,title:"upill"},function(err,docs){//更新
+     console.log(docs);
+     console.log('update success');
+});
+
+Kd.remove({id:4},function(err,docs){//删除id为4的记录
+     console.log(docs);
+     console.log('remove success');
+});
+
+*/
+
+
+
+var strmail='happylive888@qq.com'
+
+//var postmap=[];
+
+/*var testinfo={
+    id : 12345678,
+    info :{
+        mail :'2669414011@qq.com',
+        status:'',
+        newstatus:'',
+        updatecnt:0,
+        ichknochgcnt:0,
+        iwelcome:1,
+        debugcnt:0,
+    },
+    };*/
+//var chkstatustime=1000*60*10;
+var chkstatustime=1000*5;
+//postmap.push(testinfo);
+
+mail.SMTP = {  	
+    host: 'smtp.qq.com',  	
+    port: 465,  	
+    use_authentication: true,  	
+    user: strmail, 
+    pass: 'good_1234' 
+ }
+ 
+ function clearString(s){ 
+    var pattern = new RegExp("[`~!@#$^&*()=|{}';',\\[\\].<>/?~！@#￥……&*（）&;|{}‘；：”“'。，、？]") 
+    var rs = ""; 
+    for (var i = 0; i < s.length; i++) { 
+        rs = rs+s.substr(i, 1).replace(pattern, ''); 
+    } 
+    rs=rs.replace(/\ +/g,"");//去掉空格
+    rs=rs.replace(/[ ]/g,"");    //去掉空格
+    rs=rs.replace(/[\r\n]/g,"");//去掉回车换行    
+    return rs;  
+}
+setInterval(function(){
+    //查找所有快递单    
+    Kd.find(function(err,postmap){
+        if(err) return console.err(err);
+        console.dir(postmap);
+        
+        for( i in postmap){    
+         if (typeof(postmap[i]) == "undefined") { 
+           continue;
+        }
+        console.log(i+",id:"+postmap[i].id);     
+
+        //console.log(postmap[i].mail); 
+        //console.log(postmap[i].status); 
+        //console.log(postmap[i].iwelcome); 
+        //console.log("postmap[i].updatecnt:"+postmap[i].updatecnt); 
+        var mypostmapobj=new Object();  
+        mypostmapobj.context=postmap;
+        autochk=1;
+        var postkey=postmap[i].id.toString();
+        /*if((postmap[i].status.indexOf('已签收')>=0)  ||
+            (postmap[i].status.indexOf('货物')>=0)){
+            console.log("已签收:"+postmap[i].id); 
+            delete postmap[i];
+            continue;
+        }*/
+        //console.log("zzzz:"+postmap[i].status); 
+        //console.log("aaa:"+postmap[i].status.indexOf('已收取')); 
+         //检查30天没变化,就不检查了
+        if(postmap[i].ichknochgcnt>(6*24*7/(7*24))){            
+            Kd.remove({id:postmap[i].id,mail:postmap[i].mail},function(err,docs){//删除id为4的记录
+                console.log(docs);
+                console.log('remove success');
+            });
+            delete postmap[i];
+            continue;
+        }
+        var strsubject='快递【'+postkey+'】更新了,'+postmap[i].newstatus;
+        //console.log("postmap[i].status.length:"+postmap[i].status.length); 
+        if(postmap[i].iwelcome==1){
+           strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';
+        }
+        strsubject=clearString(strsubject);
+        search_kd(postkey, null,mypostmapobj,autochk);
+        console.log("查询:"+postkey); 
+        postmap[i].ichknochgcnt++;    
+        tomail=postmap[i].mail;    
+        console.log(postmap[i].id+':'+postmap[i].iwelcome);         
+        if((postmap[i].updatecnt>0 || postmap[i].iwelcome) && typeof(tomail) != "undefined" && tomail.length>0){
+            postmap[i].ichknochgcnt=0;
+            if(postmap[i].iwelcome){
+                postmap[i].iwelcome=0;
+            }
+            else{
+                if(postmap[i].updatecnt>0)
+                    postmap[i].updatecnt--;
+            }
+            Kd.update({id:postmap[i].id,mail:postmap[i].mail,updatecnt:postmap[i].updatecnt,iwelcome:postmap[i].iwelcome},function(err,docs){//更新
+                console.log(docs);
+                console.log('update success');
+            });
+            //console.log("newstatus:"+postmap[i].newstatus); 
+            console.log('begin send mail');
+            mail.send_mail({
+                sender:strmail, //发送邮件的地址
+                to:tomail, //发给谁
+                subject:strsubject,//+postmap[i].newstatus, //主题
+                body:postmap[i].status+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
+                //html:'<p>hello</p>', //如果要发送html
+                //attachments: null //如果要发送附件
+            },
+            //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
+            function(error,success){
+               if(!error){
+                    console.log('message success');
+               }else{
+                console.log('failed'+error);
+               }
+            });
+        }
+        
+        //console.log(postmap[i].status); 
+        //console.log(tmppost['mail']); 
+        //console.log(tmppost['status']); 
+        }
+    })
+    
+    
+    
+},chkstatustime);
 
 //console.log('5')
 
