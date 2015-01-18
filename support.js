@@ -242,7 +242,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
             //找到单号,而且有变化了，则更新
             if(mypostmap[i].id == keyword ){
                getpos=i;
-               debugcnt=mypostmap[i].info.debugcnt;
+               debugcnt=mypostmap[i].debugcnt;
                break;
             }
         }
@@ -251,7 +251,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     if(olddebug==0 && debugcnt>0){
         debugcnt=0; 
         if(getpos>0){
-            mypostmap[getpos].info.status='';
+            mypostmap[getpos].status='';
         }
     }
      
@@ -270,7 +270,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
   if(debugcnt>0){
     mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim()+'&debugcnt='+debugcnt;
   }
-  ////console.log('searching: %s,url: %s', keyword,mykdurl);
+  console.log('searching: %s,url: %s', keyword,mykdurl);
   var itime=new Date().getTime();
   var timecount=0;
   //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
@@ -330,25 +330,30 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     {
         //console.log("find ok"); 
         //result.setEncoding('utf8');
-        //console.log("status:"+mypostmap[getpos].info.status); 
-        if(result.length>mypostmap[getpos].info.status.length){
+        //console.log("status:"+mypostmap[getpos].status); 
+        if(result.length>mypostmap[getpos].status.length){
             var resultStr=result;
-            if(mypostmap[getpos].info.status.length>0){
+            if(mypostmap[getpos].status.length>0){
                //indexOf函数对回车换行可能不支持，返回-1
-               resultStr=result.substring(0,result.length-mypostmap[getpos].info.status.length);                    
-               //console.log("result.indexOf(mypostmap[getpos].info.status):"+result.indexOf(mypostmap[getpos].info.status)); 
+               resultStr=result.substring(0,result.length-mypostmap[getpos].status.length);                    
+               //console.log("result.indexOf(mypostmap[getpos].status):"+result.indexOf(mypostmap[getpos].status)); 
             }
             console.log("need update!"); 
-            mypostmap[getpos].info.newstatus=resultStr;
-            //console.log("newstatus:"+mypostmap[getpos].info.newstatus); 
-            mypostmap[getpos].info.status=result;
+            mypostmap[getpos].newstatus=resultStr;
+            //console.log("newstatus:"+mypostmap[getpos].newstatus); 
+            mypostmap[getpos].status=result;
             if(setmail){
-                mypostmap[getpos].info.mail=strmail;
+                mypostmap[getpos].mail=strmail;
             }
             //定时检查则要更新状态
-            mypostmap[getpos].info.updatecnt++;
-            mypostmap[getpos].info.debugcnt=debugcnt;
-            //console.log("newstatus:"+mypostmap[i].info.newstatus); 
+            mypostmap[getpos].updatecnt++;
+            mypostmap[getpos].debugcnt=debugcnt;
+            
+            Kd.update({id:mypostmap[getpos].id,mail:mypostmap[getpos].mail,updatecnt:mypostmap[getpos].updatecnt,debugcnt:mypostmap[getpos].debugcnt},function(err,docs){//更新
+                console.log(docs);
+                console.log('update success');
+            });
+            //console.log("newstatus:"+mypostmap[i].newstatus); 
             
         }
     }
@@ -358,19 +363,22 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     console.log(mypostmap[i].mail); 
     console.log(mypostmap[i].status); */
     if(getpos<0 && setmail){
-        console.log("push ok,keyword:"+keyword); 
-        mypostmap.push({
-            id : keyword,
-            info: {
-            mail :strmail,
-            status:result,
-            newstatus:'',
-            //status:'',
-            updatecnt:0,
-            ichknochgcnt:0,
-            iwelcome:1,
-            debugcnt:debugcnt,
-            },
+      console.log("push ok,keyword:"+keyword);        
+      var testinfo = new Kd();
+      testinfo.id=keyword;    
+      testinfo.mail = strmail;
+      testinfo.status=result;
+      testinfo.newstatus='';
+      testinfo.updatecnt=0;
+      testinfo.ichknochgcnt=0;
+      testinfo.iwelcome=1;
+      testinfo.debugcnt=debugcnt; 
+ 
+      testinfo.save(function(err) {  //存储
+        if (err) {
+            console.log('save failed');
+          }
+          console.log('save success');
         });
     }
     //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
