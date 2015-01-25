@@ -1,9 +1,11 @@
 var crypto = require('crypto');
 
+
 var debug = require('debug');
 var log = debug('webot-example:log');
 var verbose = debug('webot-example:verbose');
 var error = debug('webot-example:error');
+
 
 var _ = require('underscore')._;
 var search = require('../support').search;
@@ -12,7 +14,7 @@ var search_music = require('../support').search_music;
 var translate_english = require('../support').translate_english;
 var geo2loc = require('../support').geo2loc;
 var support = require('../support');
-var mail = require('nodemailer'); 
+var nodemailer = require('nodemailer'); 
 var mongodb = require('mongodb');
 if(process.env.VCAP_SERVICES){
     var env = JSON.parse(process.env.VCAP_SERVICES);
@@ -57,49 +59,72 @@ var mongourl = generate_mongo_url(mongo);
  
 
 
+
+
 var mongoose = require('mongoose');  
 //For local environment: 
 mongoose.connect(mongourl);
+
 
 var Schema = mongoose.Schema;
 
 
 
-var KdSchema = new Schema({
+
+
+
+var KDSchema = new Schema({
    id        : {type : String,index:true}
-  ,mail      : {type : String,index:true}
   ,title     : {type : String}
   ,status    : {type : String}
   ,newstatus : {type : String}
   ,updatecnt : {type : Number}
   ,ichknochgcnt: {type : Number}
+  ,ilastchkcnt: {type : Number}
   ,iwelcome: {type : Number}
   ,debugcnt: {type : Number}
 });
 
-
-
-mongoose.model("Kd", KdSchema);
-
-var Kd = mongoose.model("Kd"); //获得model实例
-
-var blog1 = new Kd();
-blog1.id = 4;
-blog1.title="ully";
+var KDMAILSSchema = new Schema({
+   id        : {type : String}
+  ,mail      : {type : String}
+});
 
 
 
-var testinfo = new Kd();
-testinfo.id='12345678';    
-testinfo.mail = '41473064@qq.com';
+
+mongoose.model("KD", KDSchema);
+
+
+var KD = mongoose.model("KD"); //获得model实例
+
+mongoose.model("KDMAILS", KDMAILSSchema);
+
+
+var KDMAILS = mongoose.model("KDMAILS"); //获得model实例
+
+
+
+var testkdnum='280304922059'
+var testinfo = new KD();
+testinfo.id=testkdnum;    
+//testinfo.mail = '41473064@qq.com';
 testinfo.status='';
 testinfo.newstatus='';
 testinfo.updatecnt=0;
-testinfo.ichknochgcnt=0;
+testinfo.ichknochgcnt=Date.now();
+testinfo.ilastchkcnt=0;
 testinfo.iwelcome=1;
 testinfo.debugcnt=0;
 
-Kd.remove({id:testinfo.id,mail:testinfo.mail},function(err,docs){//删除id为4的记录
+
+var kdmail = new KDMAILS();
+kdmail.id=testkdnum;    
+kdmail.mail = '41473064@qq.com';
+
+
+
+KD.remove({id:testinfo.id},function(err,docs){//删除id为4的记录
      console.log(docs);
      console.log('remove success');
      testinfo.save(function(err) {  //存储
@@ -109,31 +134,49 @@ Kd.remove({id:testinfo.id,mail:testinfo.mail},function(err,docs){//删除id为4�
       console.log('save success');
     });
 
+
+});
+
+KDMAILS.remove({id:kdmail.id},function(err,docs){//删除id为4的记录
+     console.log(docs);
+     console.log('remove success');
+     kdmail.save(function(err) {  //存储
+     if (err) {
+        console.log('save failed');
+     }
+      console.log('save success');
+    });
+
+
 });
     
 /*
-Kd.find({id:4},function(err,docs){//查询id为4的记录
+KD.find({id:4},function(err,docs){//查询id为4的记录
      console.log(docs);
      console.log('find success');
 });
 
-Kd.update({id:4,title:"upill"},function(err,docs){//更新
+
+KD.update({id:4,title:"upill"},function(err,docs){//更新
      console.log(docs);
      console.log('update success');
 });
 
-Kd.remove({id:4},function(err,docs){//删除id为4的记录
+
+KD.remove({id:4},function(err,docs){//删除id为4的记录
      console.log(docs);
      console.log('remove success');
 });
 
+
 */
+var strmail='lifeassist@126.com'
 
 
 
-var strmail='happylive888@qq.com'
 
 //var postmap=[];
+
 
 /*var testinfo={
     id : 12345678,
@@ -148,17 +191,47 @@ var strmail='happylive888@qq.com'
     },
     };*/
 //var chkstatustime=1000*60*10;
-var chkstatustime=1000*5;
+var chkstatustime=1000*10;
 //postmap.push(testinfo);
 
-mail.SMTP = {  	
-    host: 'smtp.qq.com',  	
-    port: 465,  	
-    use_authentication: true,  	
-    user: strmail, 
-    pass: 'good_1234' 
- }
+
+var nodemailer = require("nodemailer");
  
+// 开启一个 SMTP 连接池
+var smtpTransport = nodemailer.createTransport("SMTP",{
+    host: "smtp.126.com", // 主机
+    secureConnection: true, // 使用 SSL
+    port: 465, // SMTP 端口
+    auth: {
+        user: "lifeassist@126.com", // 账号
+        pass: "good_1234" // 密码
+    }
+});
+
+
+/* 
+// 设置邮件内容
+var mailOptions = {
+    from: "happy<lifeassist@126.com>", // 发件地址
+    to: "41473064@qq.com", // 收件列表
+    subject: "Hello world", // 标题
+    html: "<b>thanks a for visiting!</b> 世界，你好！" // html 内容
+}
+ 
+// 发送邮件
+smtpTransport.sendMail(mailOptions, function(error, response){
+    if(error){
+        console.log(error);
+    }else{
+        console.log("Message sent: " + response.message);
+    }
+    smtpTransport.close(); // 如果没用，关闭连接池
+});
+
+
+*/
+
+
  function clearString(s){ 
     var pattern = new RegExp("[`~!@#$^&*()=|{}';',\\[\\].<>/?~！@#￥……&*（）&;|{}‘；：”“'。，、？]") 
     var rs = ""; 
@@ -171,23 +244,29 @@ mail.SMTP = {
     return rs;  
 }
 setInterval(function(){
+    //sleep(10000);
+//return;
     //查找所有快递单    
-    Kd.find(function(err,postmap){
+    KD.find(function(err,postmap){
         if(err) return console.err(err);
-        console.dir(postmap);
+        //console.dir(postmap);
         
         for( i in postmap){    
          if (typeof(postmap[i]) == "undefined") { 
            continue;
         }
-        console.log(i+",id:"+postmap[i].id);     
+        console.log(i+",id:"+postmap[i].id+"Date.now()"+Date.now()+"postmap[i].ilastchkcnt"+postmap[i].ilastchkcnt);     
+        if((Date.now()-postmap[i].ilastchkcnt) < 5*60*1000){
+            console.log("check freq too much!");  
+            continue;            
+        }
 
         //console.log(postmap[i].mail); 
         //console.log(postmap[i].status); 
         //console.log(postmap[i].iwelcome); 
         //console.log("postmap[i].updatecnt:"+postmap[i].updatecnt); 
         var mypostmapobj=new Object();  
-        mypostmapobj.context=postmap;
+        mypostmapobj.context=postmap[i];
         autochk=1;
         var postkey=postmap[i].id.toString();
         /*if((postmap[i].status.indexOf('已签收')>=0)  ||
@@ -199,69 +278,165 @@ setInterval(function(){
         //console.log("zzzz:"+postmap[i].status); 
         //console.log("aaa:"+postmap[i].status.indexOf('已收取')); 
          //检查30天没变化,就不检查了
-        if(postmap[i].ichknochgcnt>(6*24*7/(7*24))){            
-            Kd.remove({id:postmap[i].id,mail:postmap[i].mail},function(err,docs){//删除id为4的记录
+         //console.log('Date.now()'+Date.now()+'ichknochgcnt'+postmap[i].ichknochgcnt+'-'+(Date.now()-postmap[i].ichknochgcnt));
+        if((Date.now()-postmap[i].ichknochgcnt) > 24*60*60*30*1000){            
+            KD.remove({id:postmap[i].id},function(err,docs){//删除id为4的记录
+                console.log(docs);
+                console.log('remove success');
+            });
+            
+            KDMAILS.remove({id:postmap[i].id},function(err,docs){//删除id为4的记录
                 console.log(docs);
                 console.log('remove success');
             });
             delete postmap[i];
             continue;
-        }
-        var strsubject='快递【'+postkey+'】更新了,'+postmap[i].newstatus;
-        //console.log("postmap[i].status.length:"+postmap[i].status.length); 
-        if(postmap[i].iwelcome==1){
-           strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';
-        }
-        strsubject=clearString(strsubject);
-        search_kd(postkey, null,mypostmapobj,autochk);
-        console.log("查询:"+postkey); 
-        postmap[i].ichknochgcnt++;    
-        tomail=postmap[i].mail;    
-        console.log(postmap[i].id+':'+postmap[i].iwelcome);         
-        if((postmap[i].updatecnt>0 || postmap[i].iwelcome) && typeof(tomail) != "undefined" && tomail.length>0){
-            postmap[i].ichknochgcnt=0;
-            if(postmap[i].iwelcome){
-                postmap[i].iwelcome=0;
-            }
-            else{
-                if(postmap[i].updatecnt>0)
-                    postmap[i].updatecnt--;
-            }
-            Kd.update({id:postmap[i].id,mail:postmap[i].mail,updatecnt:postmap[i].updatecnt,iwelcome:postmap[i].iwelcome},function(err,docs){//更新
-                console.log(docs);
-                console.log('update success');
-            });
-            //console.log("newstatus:"+postmap[i].newstatus); 
-            console.log('begin send mail');
-            mail.send_mail({
-                sender:strmail, //发送邮件的地址
-                to:tomail, //发给谁
-                subject:strsubject,//+postmap[i].newstatus, //主题
-                body:postmap[i].status+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
-                //html:'<p>hello</p>', //如果要发送html
-                //attachments: null //如果要发送附件
-            },
-            //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
-            function(error,success){
-               if(!error){
-                    console.log('message success');
-               }else{
-                console.log('failed'+error);
-               }
-            });
+        } 
+        
+        search_kd(postkey, function(error, strsubject,mypostmap){
+       // console.log("345:"); 
+        mypostmap.ilastchkcnt=Date.now();
+        KD.update({id:mypostmap.id,ilastchkcnt:mypostmap.ilastchkcnt}
+            ,function(err,docs){//更新
+            if(err) return console.err(err);
+            //console.log(docs);
+            //console.log('update success');
+        });
+        if(error){
+        console.log(error);
+        }else{
+           //console.log("123:"); 
+            var strsubject='快递【'+postkey+'】更新了,'+mypostmap.newstatus;                   
+                    console.log("查询:"+postkey); 
+                     
+                    //tomail=mypostmap.mail;    
+                    //console.log("TEST:"+mypostmap.id+':'+mypostmap.updatecnt+':'+mypostmap.iwelcome+','+strmail.length);         
+                    if((mypostmap.updatecnt>0 || mypostmap.iwelcome) && typeof(strmail) != "undefined" && strmail.length>0){
+                        //mypostmap.ichknochgcnt=0;
+                        strsubject=clearString(strsubject);
+                        //console.log("strsubject:"+strsubject); 
+                        if(mypostmap.iwelcome==1){
+                           strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';
+                        }
+                        if(mypostmap.iwelcome){
+                            mypostmap.iwelcome=0;
+                        }
+                        else{
+                            if(mypostmap.updatecnt>0)
+                                mypostmap.updatecnt--;
+                        }
+                        console.log('begin update db ...');
+                        KD.update({id:mypostmap.id,updatecnt:mypostmap.updatecnt,iwelcome:mypostmap.iwelcome
+                                ,newstatus:mypostmap.newstatus,status:mypostmap.status,ilastchkcnt:mypostmap.ilastchkcnt}
+                                ,function(err,docs){//更新
+                            if(err) return console.err(err);
+                            //console.log(docs);
+                            console.log('update success');
+                        });
+                        //console.log("newstatus:"+mypostmap.newstatus); 
+                        console.log('begin send mail');
+                        KDMAILS.find({id:mypostmap.id},function(err,bookman){
+                            if(err) return console.err(err);
+                            //console.dir(postmap);
+                            console.log('begin send mail to bookman');
+                            for( j in bookman){    
+                                 if (typeof(bookman[j]) == "undefined") { 
+                                   continue;
+                                    }
+                                console.log('bookman[j].mail'+bookman[j].mail+"mypostmap.length:"+mypostmap.status.length);
+                                smtpTransport.sendMail({
+                                    sender:strmail, //发送邮件的地址
+                                    to:bookman[j].mail, //发给谁
+                                    subject:strsubject,//+mypostmap.newstatus, //主题
+                                    body:mypostmap.status+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
+                                    //html:'<p>hello</p>', //如果要发送html
+                                    //attachments: null //如果要发送附件
+                                },
+                                //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
+                                function(error,success){
+                                   if(!error){
+                                        console.log('message success');
+                                   }else{
+                                    console.log('failed'+error);
+                                   }
+                                });
+                            }
+                        });
+                   
+                    
+                    //console.log(mypostmap.status); 
+                    //console.log(tmppost['mail']); 
+                    //console.log(tmppost['status']); 
+                  }
         }
         
-        //console.log(postmap[i].status); 
-        //console.log(tmppost['mail']); 
-        //console.log(tmppost['status']); 
-        }
-    })
+    },mypostmapobj,autochk,strmail);
+      
     
-    
+     }
+});
     
 },chkstatustime);
 
+
+
+  
+   function do_search_allnum_kd(info, next){
+    // pattern的解析结果将放在param里
+    var q =  info.text;
+    log('searching: ', q);
+//console.log(q);  
+    // 从某个地方搜索到数据...
+    var mypostmapobj=new Object();  
+    /*var tmp1=[];
+    tmp1.push({
+        id : 12345678,
+        mail :'41473604@qq.com',
+        status:null,
+        });*/
+    var tmppostmap = new KD();
+    tmppostmap.id=q;    
+    //tmppostmap.mail = '';
+    tmppostmap.status='';
+    tmppostmap.newstatus='';
+    tmppostmap.updatecnt=0;
+    tmppostmap.ichknochgcnt=Date.now();
+    tmppostmap.ilastchkcnt=0;
+    tmppostmap.iwelcome=1;
+    tmppostmap.debugcnt=0;
+    mypostmapobj.context=tmppostmap;
+    autochk=0;
+    //var tmp=13;
+    //console.log("index:"+mypostmapobj.context[0].id); 
+    //console.log("q:"+q);
+    search_kd(q ,function(err,result,postmap,strmail){
+            if(err) return console.err(err);
+            //console.dir(postmap);
+            if(typeof(strmail) != "undefined" && strmail.length>0 && result.length>0){
+                 postmap.save(function(err) {  //存储
+                 if (err) {
+                    console.log('postmap save failed');
+                 }
+                  console.log(' postmap save success');
+                });
+                
+                 var kdmail = new KDMAILS();
+                 kdmail.id=postmap.id;
+                 kdmail.mail=strmail;
+                 kdmail.save(function(err) {  //存储
+                 if (err) {
+                    console.log('kdmail save failed');
+                 }
+                  console.log('kdmail save success');
+                });
+            }
+            return next(null, result);
+        }
+        ,mypostmapobj,autochk);
+    //return search_kd(q ,next,mypostmapobj,autochk);
+  }
 //console.log('5')
+
 
 /*
 var arr={a:1,b:2,c:3};
@@ -288,6 +463,7 @@ module.exports = exports = function(webot){
     console.log('3');
     setTimeout(function(){console.log('4')},2000);*/
 
+
   var reg_help = /^(help|\?)$/i
   webot.set({
     // name 和 description 都不是必须的
@@ -304,23 +480,24 @@ module.exports = exports = function(webot){
         url: '',
         description: [
           '建议你试试这几条指令:',
-		    //'1. kd+空格+单号 : 查询快递状态',
-			'1. 快递号码 : 查询快递状态',
-			//'2. dg+空格+歌名 : 点歌',
-			'2. 歌曲名称 : 点歌',
-			'3. fy+空格+中文内容 : 中译英',
+   //'1. kd+空格+单号 : 查询快递状态',
+'1. 快递号码 : 查询快递状态',
+//'2. dg+空格+歌名 : 点歌',
+'2. 歌曲名称 : 点歌',
+'3. fy+空格+中文内容 : 中译英',
             '4. game : 玩玩猜数字的游戏吧',
             '6. s+空格+关键词 : 我会帮你百度搜索喔',
             '6. 发送你的经纬度',
             '7. 重看本指令请回复help或问号',
             '8. 更多指令请回复more',
-			'9. 商务合作请微信我langdalang001'
+'9. 商务合作请微信我langdalang001'
         ].join('\n')
       };
       // 返回值如果是list，则回复图文消息列表
       return reply;
     }
   });
+
 
   // 更简单地设置一条规则
   webot.set(/^more$/i, function(info){
@@ -335,6 +512,7 @@ module.exports = exports = function(webot){
       '没有更多啦！当前可用指令：\n' + reply];
   });
 
+
   webot.set('who_are_you', {
     description: '想知道我是谁吗? 发送: who?',
     // pattern 既可以是函数，也可以是 regexp 或 字符串(模糊匹配)
@@ -343,10 +521,12 @@ module.exports = exports = function(webot){
     handler: ['我是神马生活服务小助手', '贴心的生活服务小助手']
   });
 
+
   // 正则匹配后的匹配组存在 info.query 中
   webot.set('your_name', {
     description: '自我介绍下吧, 发送: I am [enter_your_name]',
     pattern: /^(?:my name is|i am|我(?:的名字)?(?:是|叫)?)\s*(.*)$/i,
+
 
     // handler: function(info, action){
     //   return '你好,' + info.param[1]
@@ -355,43 +535,62 @@ module.exports = exports = function(webot){
     handler: '你好,{1}'
   });
 
+
 // function to calculate local time
+
 
 // in a different city
 
+
 // given the city's UTC offset
+
 
 function calcTime(city, offset) {
 
-	// create Date object for current location
 
-	d = new Date();
+// create Date object for current location
 
-	 
 
-	// convert to msec
+d = new Date();
 
-	// add local time zone offset
 
-	// get UTC time in msec
+ 
 
-	utc = d.getTime() + (d.getTimezoneOffset() * 60000);
 
-	 
+// convert to msec
 
-	// create new Date object for different city
 
-	// using supplied offset
+// add local time zone offset
 
-	nd = new Date(utc + (3600000*offset));
 
-	 
+// get UTC time in msec
+
+
+utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+
+
+ 
+
+
+// create new Date object for different city
+
+
+// using supplied offset
+
+
+nd = new Date(utc + (3600000*offset));
+
+
+ 
     return nd;
-	// return time as a string
+// return time as a string
 
-	//return "The local time in " + city + " is " + nd.toLocaleString();
+
+//return "The local time in " + city + " is " + nd.toLocaleString();
+
 
 }
+
 
   // 支持一次性加多个（方便后台数据库存储规则）
   webot.set([{
@@ -417,10 +616,10 @@ function calcTime(city, offset) {
     pattern: /^(几点了|time)\??$/i,
     handler: function(info) {
       //var d = new Date();
-	  var d = calcTime('Singapore', '+8');
+ var d = calcTime('Singapore', '+8');
       var h = d.getHours();
       //var t = '现在是服务器时间' + h + '点' + d.getMinutes() + '分';
-	  var t = '现在是北京时间' + h + '点' + d.getMinutes() + '分';
+ var t = '现在是北京时间' + h + '点' + d.getMinutes() + '分';
       if (h < 4 || h > 22) return t + '，夜深了，早点睡吧 [月亮]';
       if (h < 6) return t + '，您还是再多睡会儿吧';
       if (h < 9) return t + '，又是一个美好的清晨呢，今天准备去哪里玩呢？';
@@ -431,6 +630,7 @@ function calcTime(city, offset) {
       return t;
     }
   }]);
+
 
   // 等待下一次回复
   webot.set('guess my sex', {
@@ -456,6 +656,7 @@ function calcTime(city, offset) {
     //   return 'haha, I wont tell you'
     // }
 
+
     // 也可以是数组格式，每个元素为一条rule
     // replies: [{
     //   pattern: '/^g(irl)?\\??$/i',
@@ -469,9 +670,11 @@ function calcTime(city, offset) {
     // }]
   });
 
+
   // 定义一个 wait rule
   webot.waitRule('wait_guess', function(info) {
     var r = Number(info.text);
+
 
     // 用户不想玩了...
     if (isNaN(r)) {
@@ -479,21 +682,26 @@ function calcTime(city, offset) {
       return null;
     }
 
+
     var num = info.session.guess_answer;
+
 
     if (r === num) {
       return '你真聪明!';
     }
+
 
     var rewaitCount = info.session.rewait_count || 0;
     if (rewaitCount >= 2) {
       return '怎么这样都猜不出来！答案是 ' + num + ' 啊！';
     }
 
+
     //重试
     info.rewait();
     return (r > num ? '大了': '小了') +',还有' + (2 - rewaitCount) + '次机会,再猜.';
   });
+
 
   webot.set('guess number', {
     description: '发送: game , 玩玩猜数字的游戏吧',
@@ -502,28 +710,35 @@ function calcTime(city, offset) {
       //等待下一次回复
       var num = Number(info.param[1]) || _.random(1,9);
 
+
       verbose('answer is: ' + num);
 
+
       info.session.guess_answer = num;
+
 
       info.wait('wait_guess');
       return '玩玩猜数字的游戏吧, 1~9,选一个';
     }
   });
 
+
   webot.waitRule('wait_suggest_keyword', function(info, next){
     if (!info.text) {
       return next();
     }
 
+
     // 按照定义规则的 name 获取其他 handler
     var rule_search = webot.get('search');
+
 
     // 用户回复回来的消息
     if (info.text.match(/^(好|要|y)$/i)) {
       // 修改回复消息的匹配文本，传入搜索命令执行
       info.param[0] = 's nodejs';
       info.param[1] = 'nodejs';
+
 
       // 执行某条规则
       webot.exec(info, rule_search, next);
@@ -553,6 +768,7 @@ function calcTime(city, offset) {
     }
   });
 
+
   function do_search(info, next){
     // pattern的解析结果将放在param里
     var q = info.param[1];
@@ -560,6 +776,7 @@ function calcTime(city, offset) {
     // 从某个地方搜索到数据...
     return search(q , next);
   }
+
 
   // 可以通过回调返回结果
   webot.set('search', {
@@ -572,8 +789,13 @@ function calcTime(city, offset) {
 
 
 
+
+
+
+
   
   
+
 
   function do_translate_english(info, next){
     // pattern的解析结果将放在param里
@@ -582,6 +804,7 @@ function calcTime(city, offset) {
     // 从某个地方搜索到数据...
     return translate_english(q , next);
   }
+
 
   // 可以通过回调返回结果
   webot.set('translate_english', {
@@ -599,6 +822,7 @@ function calcTime(city, offset) {
     return search_music(q , next);
   }
 
+
   // 可以通过回调返回结果
   webot.set('search_music', {
     description: '发送: dg 关键词 ',
@@ -606,6 +830,7 @@ function calcTime(city, offset) {
     //handler也可以是异步的
     handler: do_search_music
   });
+
 
   webot.waitRule('wait_timeout', function(info) {
     if (new Date().getTime() - info.session.wait_begin > 5000) {
@@ -615,6 +840,7 @@ function calcTime(city, offset) {
       return '你在规定时限里面输入了: ' + info.text;
     }
   });
+
 
   // 超时处理
   webot.set('timeout', {
@@ -626,6 +852,7 @@ function calcTime(city, offset) {
       return '请等待5秒后回复';
     }
   });
+
 
   //支持location消息,已经提供了geo转地址的工具，使用的是高德地图的API
   //http://restapi.amap.com/rgeocode/simple?resType=json&encode=utf-8&range=3000&roadnum=0&crossnum=0&poinum=0&retvalue=1&sid=7001&region=113.24%2C23.08
@@ -642,6 +869,7 @@ function calcTime(city, offset) {
     }
   });
 
+
   //图片
   webot.set('check_image', {
     description: '发送图片,我将返回其hash值',
@@ -653,7 +881,9 @@ function calcTime(city, offset) {
       try{
         var shasum = crypto.createHash('md5');
 
+
         var req = require('request')(info.param.picUrl);
+
 
         req.on('data', function(data) {
           shasum.update(data);
@@ -668,6 +898,7 @@ function calcTime(city, offset) {
     }
   });
 
+
   // 回复图文消息
   webot.set('reply_news', {
     description: '发送news,我将回复图文消息你',
@@ -680,6 +911,7 @@ function calcTime(city, offset) {
       return Number(info.param[1]) == 1 ? reply[0] : reply;
     }
   });
+
 
   // 可以指定图文消息的映射关系
   webot.config.mapping = function(item, index, info){
@@ -694,26 +926,7 @@ function calcTime(city, offset) {
     // 可以通过回调返回结果
     
  
-  
-   function do_search_allnum_kd(info, next){
-    // pattern的解析结果将放在param里
-    var q =  info.text;
-    log('searching: ', q);
-	//console.log(q);  
-    // 从某个地方搜索到数据...
-    var mypostmapobj=new Object();  
-    /*var tmp1=[];
-    tmp1.push({
-        id : 12345678,
-        mail :'41473604@qq.com',
-        status:null,
-        });*/
-    mypostmapobj.context=postmap;
-    autochk=0;
-    //var tmp=13;
-    //console.log("index:"+mypostmapobj.context[0].id); 
-    return search_kd(q ,next,mypostmapobj,autochk);
-  }
+
  
    //所有消息都无法匹配时的fallback
   webot.set( 'search_allnum_kd', {
@@ -734,7 +947,7 @@ function calcTime(city, offset) {
     // pattern的解析结果将放在param里
     var q =  info.text;
     log('searching: ', q);
-	console.log(q);  
+console.log(q);  
     // 从某个地方搜索到数据...
     return search_music(q , next);
   }

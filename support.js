@@ -1,10 +1,12 @@
 var debug = require('debug');
 var log = debug('webot-example:log');
 
+
 var _ = require('underscore')._;
 var request = require('request');
 var http = require('http');
 var myphpurl = 'http://51anygophp.ap01.aws.af.cm';
+//var myphpurl = 'http://localhost/php';
 var suggestmsg='';
 var mytimeout=4800;
 /**
@@ -27,6 +29,7 @@ exports.geo2loc = function geo2loc(param, cb){
     }
   };
   log('querying amap for: [%s]', options.qs.region);
+
 
   //查询
   request.get(options, function(err, res, body){
@@ -56,23 +59,24 @@ exports.geo2loc = function geo2loc(param, cb){
 exports.translate_english= function(keyword, cb){
   log('searching: %s', keyword);
   var options = {    
-	//url:'http://51anygo.sinaapp.com/googlefy/fanyi.php?txt=%D6%D0%B9%FA%C8%CB%C3%F1%B9%B2%BA%CD%B9%FA',
-	url:myphpurl+'/googlefy/fanyi.php?txt='+keyword.trim(),
+//url:'http://51anygo.sinaapp.com/googlefy/fanyi.php?txt=%D6%D0%B9%FA%C8%CB%C3%F1%B9%B2%BA%CD%B9%FA',
+url:myphpurl+'/googlefy/fanyi.php?txt='+keyword.trim(),
     //url: 'http://51anygo.sinaapp.com/googlefy/fanyi.php?txt='+keyword.trim(),
     timeout: mytimeout,
     qs:{}
-	};
+};
   //console.log('options: ' + options.url);
   //request.setTimeout(timeout, [callback]);
   request.get(options, function(err, res, body){
     if (err || !body){
       return cb(null, '现在暂时无法搜索，待会儿再来好吗？');
     }
-	console.log(body);  
+console.log(body);  
+
 
     var result;
     result = body;
-	var pageData = "";
+var pageData = "";
     res.setEncoding('gb2312');
     res.on('data', function (chunk) {
         pageData += chunk;
@@ -88,6 +92,8 @@ exports.translate_english= function(keyword, cb){
 };
 
 
+
+
 /**
  * 搜索音乐
  *
@@ -101,15 +107,15 @@ exports.search_music = function(keyword, cb){
   var options = {
      //url:'http://api2.sinaapp.com/search/music/?appkey=0020130430&appsecert=fa6095e1133d28ad&reqtype=music&keyword=%E5%8D%81%E5%B9%B4',
     //url: 'http://api2.sinaapp.com/search/music/?appkey=0020130430&appsecert=fa6095e1133d28ad&reqtype=music&keyword='+keyword.trim(),
-	//url:'http://51anygo.sinaapp.com/baidumusic/baidumusic.php?name=%E5%8D%81%E5%B9%B4',
-	//url:'http://51anygo.sinaapp.com/baidumusic/baidumusic.php?name=%CA%AE%C4%EA',
-	//url:'http://findme.jhost.cn/php/baidumusic/baidumusic.php?name='+keyword.trim(),
+//url:'http://51anygo.sinaapp.com/baidumusic/baidumusic.php?name=%E5%8D%81%E5%B9%B4',
+//url:'http://51anygo.sinaapp.com/baidumusic/baidumusic.php?name=%CA%AE%C4%EA',
+//url:'http://findme.jhost.cn/php/baidumusic/baidumusic.php?name='+keyword.trim(),
     //url: 'http://51anygo.sinaapp.com/baidumusic/baidumusic.php?name='+keyword.trim(),
-	//url:'http://findme.jhost.cn/php/xiamimusic/music.php?name='+encodeURI(keyword.trim()),
+//url:'http://findme.jhost.cn/php/xiamimusic/music.php?name='+encodeURI(keyword.trim()),
     url: myphpurl+'/xiamimusic/xm.php?name='+encodeURI(keyword.trim()),
     timeout: mytimeout,
     qs:{}
-	};
+};
     //console.log('options: ' + options.url);
   request.get(options, function(err, res, body){
   //http://m.kugou.com/weixin/?action=single&filename=%u6076%u9b54%u5976%u7238-%u636e%u8bf4JZ%u4e5f%u5728%u627e%u540d%u5b57S&issoft=1&timelen=294231&chl=qq_client&MicroBlog=2
@@ -126,23 +132,23 @@ exports.search_music = function(keyword, cb){
         }];
         return cb(null, result);
     }
-	console.log(body);
+console.log(body);
     //var regex = /comCode/gi;
     var i = 1;
-	var result;
+var result;
     var json=body;
     //json = json.force_encoding('UTF-8')
     //json = json.gsub(/[\u0000-\u001f\u007f\u0080-\u009f]/,'')
-    try {	
+    try {
         var jsonObj=JSON.parse(String(json));
         //console.log(jsonObj);  
-        if (!jsonObj || !jsonObj.music || !jsonObj.music.title ){	  
-            var nofindmsg='找不到您要的歌曲，试下别的歌吧';	           
+        if (!jsonObj || !jsonObj.music || !jsonObj.music.title ){  
+            var nofindmsg='找不到您要的歌曲，试下别的歌吧';           
             var indexfrom=parseInt(Math.random()*(490-1+1));
             var findtag = ' '+indexfrom+'.';   
             var rfindbgn=suggestmsg.indexOf(findtag);
             var findtag = ' '+(indexfrom+10)+'.'; 
-            var rfindend=suggestmsg.indexOf(findtag);	
+            var rfindend=suggestmsg.indexOf(findtag);
             if(rfindbgn>=0 && rfindend>=0)  
             {  
                 suggestmsg = suggestmsg.substring(rfindbgn,rfindend);
@@ -154,6 +160,8 @@ exports.search_music = function(keyword, cb){
         console.log("jsonObj.music.musicurl:"+jsonObj.music.musicurl);
         console.log("jsonObj.music.description:"+jsonObj.music.description);
         //var m = regex.exec(body);
+
+
 
 
         result = {
@@ -174,6 +182,7 @@ exports.search_music = function(keyword, cb){
     return cb(null, result);
   });
 };
+
 
  //判断字符串所占的字节数
 function GetCharLength(str)
@@ -196,6 +205,7 @@ function CutStr(str,len)   //elementID表示要进行处理的对象ID,len表示
     }
 }      
 
+
 /**
  * 搜索快递
  *
@@ -205,13 +215,15 @@ function CutStr(str,len)   //elementID表示要进行处理的对象ID,len表示
  * @param  {String}   cb.result     查询结果
  */
 exports.search_kd = function(keyword, cb,postmap,autochk){
+//console.log("1.keyword:"+keyword);  
     var intime=new Date().getTime();
     keyword=keyword.replace("  "," ");    //去掉两个的空格
+    //console.log("2.keyword:"+keyword);  
     var strtmp = keyword.split(" ");
     var strmail='';
     var debugcnt=0;
     var getpos=-1;
-    
+    //console.log("3.strtmp:"+strtmp);  
     keyword = strtmp[0];
     keyword=keyword.trim();
     strmail = strtmp[1];
@@ -237,7 +249,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     console.log("keyword:"+keyword+",strmail:"+strmail);  
     var mypostmap=postmap.context;
     //if(autochk)
-    {
+    /*{
         for( i in mypostmap){ 
             //找到单号,而且有变化了，则更新
             if(mypostmap[i].id == keyword ){
@@ -246,13 +258,13 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
                break;
             }
         }
-    }
+    }*/
     
     if(olddebug==0 && debugcnt>0){
         debugcnt=0; 
-        if(getpos>0){
-            mypostmap[getpos].status='';
-        }
+        //if(getpos>0){
+        mypostmap.status='';
+       // }
     }
      
   
@@ -266,6 +278,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
         //console.log(tmppost['status']); 
     }*/
 
+
   var mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim();
   if(debugcnt>0){
     mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim()+'&debugcnt='+debugcnt;
@@ -277,7 +290,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
   var options = {
     url: mykdurl,
     timeout: (mytimeout-(itime-intime)),
-	//url: 'http://51anygo.sinaapp.com/kuaidi100/get.php?nu='+keyword.trim(),
+//url: 'http://51anygo.sinaapp.com/kuaidi100/get.php?nu='+keyword.trim(),
     qs: {
     }
   };
@@ -292,11 +305,13 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     //var regex = /comCode/gi;
     var i = 1;
 
+
     //var m = regex.exec(body);
+
 
     var result="";
     //console.log("body:",body);
-	result = body;
+    result = body;
     if (typeof(result) == "undefined") { 
        result=""
     }
@@ -326,34 +341,30 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     if(debugcnt>0){
         debugcnt++;
     }
-    if(getpos>-1 )
+    //if(getpos>-1 )
     {
         //console.log("find ok"); 
         //result.setEncoding('utf8');
-        //console.log("status:"+mypostmap[getpos].status); 
-        if(result.length>mypostmap[getpos].status.length){
+        //console.log("status:"+mypostmap.status+"result:"+result); 
+        if(result.length>mypostmap.status.length){
             var resultStr=result;
-            if(mypostmap[getpos].status.length>0){
+            if(mypostmap.status.length>0){
                //indexOf函数对回车换行可能不支持，返回-1
-               resultStr=result.substring(0,result.length-mypostmap[getpos].status.length);                    
-               //console.log("result.indexOf(mypostmap[getpos].status):"+result.indexOf(mypostmap[getpos].status)); 
+               resultStr=result.substring(0,result.length-mypostmap.status.length);                    
+               //console.log("result.indexOf(mypostmap.status):"+result.indexOf(mypostmap.status)); 
             }
             console.log("need update!"); 
-            mypostmap[getpos].newstatus=resultStr;
-            //console.log("newstatus:"+mypostmap[getpos].newstatus); 
-            mypostmap[getpos].status=result;
+            mypostmap.newstatus=resultStr;
+           // console.log("newstatus:"+mypostmap.newstatus); 
+            mypostmap.status=result;
             if(setmail){
-                mypostmap[getpos].mail=strmail;
+                mypostmap.id=keyword;
+                //mypostmap.mail=strmail;
             }
             //定时检查则要更新状态
-            mypostmap[getpos].updatecnt++;
-            mypostmap[getpos].debugcnt=debugcnt;
-            
-            Kd.update({id:mypostmap[getpos].id,mail:mypostmap[getpos].mail,updatecnt:mypostmap[getpos].updatecnt,debugcnt:mypostmap[getpos].debugcnt},function(err,docs){//更新
-                console.log(docs);
-                console.log('update success');
-            });
-            //console.log("newstatus:"+mypostmap[i].newstatus); 
+            mypostmap.updatecnt++;
+            mypostmap.debugcnt=debugcnt;
+            //console.log("newstatus:"+mypostmap.newstatus); 
             
         }
     }
@@ -361,26 +372,23 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     /*console.log(i+":");         
     console.log(mypostmap[i].id); 
     console.log(mypostmap[i].mail); 
-    console.log(mypostmap[i].status); */
+    console.log(mypostmap[i].status); 
     if(getpos<0 && setmail){
-      console.log("push ok,keyword:"+keyword);        
-      var testinfo = new Kd();
-      testinfo.id=keyword;    
-      testinfo.mail = strmail;
-      testinfo.status=result;
-      testinfo.newstatus='';
-      testinfo.updatecnt=0;
-      testinfo.ichknochgcnt=0;
-      testinfo.iwelcome=1;
-      testinfo.debugcnt=debugcnt; 
- 
-      testinfo.save(function(err) {  //存储
-        if (err) {
-            console.log('save failed');
-          }
-          console.log('save success');
+        console.log("push ok,keyword:"+keyword); 
+        mypostmap.push({
+            id : keyword,
+            info: {
+            mail :strmail,
+            status:result,
+            newstatus:'',
+            //status:'',
+            updatecnt:0,
+            ichknochgcnt:0,
+            iwelcome:1,
+            debugcnt:debugcnt,
+            },
         });
-    }
+    }*/
     //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
     //}
     if(!autochk){
@@ -398,9 +406,9 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
        result = CutStr(result,2040);
        //console.log('trim timecount:%d,new Date().getTime(): %d,result;%d,buff size;%d',++timecount, new Date().getTime(),GetCharLength(result),(new Buffer(result)).length);
     }
-	////console.log('STATUS: ' + res.statusCode);
+////console.log('STATUS: ' + res.statusCode);
     ////console.log('HEADERS: ' + JSON.stringify(res.headers));
-	/*var pageData = "";
+/*var pageData = "";
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
         pageData += chunk;
@@ -417,6 +425,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
       result = '搜不到任何结果呢';
     }*/
 
+
     // result 会直接作为
     // robot.reply() 的返回值
     //
@@ -429,10 +438,12 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     // }];
     //
     // 则会生成图文列表
-    if(!autochk)
-        return cb(null, result);
+    //if(!autochk)
+    return cb(null, result,mypostmap,strmail);
   });
 };
+
+
 
 
 /**
@@ -460,12 +471,14 @@ exports.search = function(keyword, cb){
     var links = [];
     var i = 1;
 
+
     while (true) {
       var m = regex.exec(body);
       if (!m || i > 5) break;
       links.push(i + '. ' + m[1]);
       i++;
     }
+
 
     var result;
     if (links.length) {
@@ -479,6 +492,7 @@ exports.search = function(keyword, cb){
     } else {
       result = '搜不到任何结果呢';
     }
+
 
     // result 会直接作为
     // robot.reply() 的返回值
@@ -496,6 +510,7 @@ exports.search = function(keyword, cb){
   });
 };
 
+
 /**
  * 下载图片
  *
@@ -509,11 +524,15 @@ exports.download = function(url, stream){
 };
 
 
+
+
 /*
+
 
 exports.hashtable_clear = function hashtable_clear(){ 
     this.hashtable = new Array(); 
 } 
+
 
 exports.hashtable_containsKey = function hashtable_containsKey(key){ 
     var exists = false; 
@@ -537,6 +556,7 @@ exports.hashtable_containsValue = function hashtable_containsValue(value){
     } 
     return contains; 
 } 
+
 
 exports.hashtable_get = function hashtable_get(key){ 
     return this.hashtable[key]; 
@@ -590,6 +610,7 @@ exports.hashtable_values = function hashtable_values(){
     } 
     return values; 
 } 
+
 
 exports.Hashtable = function Hashtable(){ 
     this.clear = hashtable_clear; 
