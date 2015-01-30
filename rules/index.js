@@ -81,13 +81,14 @@ var KDSchema = new Schema({
   ,updatecnt : {type : Number}
   ,ichknochgcnt: {type : Number}
   ,ilastchkcnt: {type : Number}
-  ,iwelcome: {type : Number}
+  //,iwelcome: {type : Number}
   ,debugcnt: {type : Number}
 });
 
 var KDMAILSSchema = new Schema({
-   id        : {type : String}
-  ,mail      : {type : String}
+   id        : {type : String,index:true}
+  ,mail      : {type : String,index:true}
+  ,iwelcome  : {type : Number}
 });
 
 
@@ -114,12 +115,12 @@ testinfo.newstatus='';
 testinfo.updatecnt=0;
 testinfo.ichknochgcnt=Date.now();
 testinfo.ilastchkcnt=0;
-testinfo.iwelcome=1;
 testinfo.debugcnt=0;
 
 
 var kdmail = new KDMAILS();
 kdmail.id=testkdnum;    
+kdmail.iwelcome=1;  
 kdmail.mail = '41473064@qq.com';
 
 
@@ -194,7 +195,7 @@ var strmail='lifeassist@126.com'
 var chkstatustime=1000*10;
 //postmap.push(testinfo);
 
-
+var moment = require('moment')
 var nodemailer = require("nodemailer");
  
 // 开启一个 SMTP 连接池
@@ -208,8 +209,8 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
     }
 });
 
-
-/* 
+/*
+ 
 // 设置邮件内容
 var mailOptions = {
     from: "happy<lifeassist@126.com>", // 发件地址
@@ -228,8 +229,9 @@ smtpTransport.sendMail(mailOptions, function(error, response){
     smtpTransport.close(); // 如果没用，关闭连接池
 });
 
-
 */
+
+
 
 
  function clearString(s){ 
@@ -255,12 +257,13 @@ setInterval(function(){
          if (typeof(postmap[i]) == "undefined") { 
            continue;
         }
-        console.log(i+",id:"+postmap[i].id+"Date.now()"+Date.now()+"postmap[i].ilastchkcnt"+postmap[i].ilastchkcnt);     
+		    
         if((Date.now()-postmap[i].ilastchkcnt) < 5*60*1000){
-            console.log("check freq too much!");  
+            //console.log("check freq too much!");  
             continue;            
         }
-
+        var now_time = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+        console.log(now_time+",id:"+postmap[i].id+"Date.now()"+Date.now()+"postmap[i].ilastchkcnt"+postmap[i].ilastchkcnt); 
         //console.log(postmap[i].mail); 
         //console.log(postmap[i].status); 
         //console.log(postmap[i].iwelcome); 
@@ -293,45 +296,39 @@ setInterval(function(){
             continue;
         } 
         
-        search_kd(postkey, function(error, strsubject,mypostmap){
+        search_kd(postkey, function(error, strsubject,mypostmap,strnewmail){
        // console.log("345:"); 
-        mypostmap.ilastchkcnt=Date.now();
-        KD.update({id:mypostmap.id,ilastchkcnt:mypostmap.ilastchkcnt}
-            ,function(err,docs){//更新
-            if(err) return console.err(err);
-            //console.log(docs);
-            //console.log('update success');
-        });
+        mypostmap.ilastchkcnt=Date.now();       
         if(error){
         console.log(error);
         }else{
            //console.log("123:"); 
-            var strsubject='快递【'+postkey+'】更新了,'+mypostmap.newstatus;                   
+                           
                     console.log("查询:"+postkey); 
                      
                     //tomail=mypostmap.mail;    
-                    //console.log("TEST:"+mypostmap.id+':'+mypostmap.updatecnt+':'+mypostmap.iwelcome+','+strmail.length);         
-                    if((mypostmap.updatecnt>0 || mypostmap.iwelcome) && typeof(strmail) != "undefined" && strmail.length>0){
+                    console.log("id:"+mypostmap.id+',updatecnt:'+mypostmap.updatecnt);         
+                    if(mypostmap.updatecnt>0){
                         //mypostmap.ichknochgcnt=0;
-                        strsubject=clearString(strsubject);
+                        //strsubject=clearString(strsubject);
                         //console.log("strsubject:"+strsubject); 
-                        if(mypostmap.iwelcome==1){
-                           strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';
-                        }
-                        if(mypostmap.iwelcome){
-                            mypostmap.iwelcome=0;
+                        /*if(mypostmap.iwelcome==1){
+                          // strsubject='您订阅了快递【'+postkey+'】提醒,我会为您提供最新的快递状态！';                   
+                           mypostmap.iwelcome=0;
                         }
                         else{
                             if(mypostmap.updatecnt>0)
                                 mypostmap.updatecnt--;
-                        }
+                        }*/
+						if(mypostmap.updatecnt>0)
+                                mypostmap.updatecnt=0;
                         console.log('begin update db ...');
-                        KD.update({id:mypostmap.id,updatecnt:mypostmap.updatecnt,iwelcome:mypostmap.iwelcome
+                        KD.update({id:mypostmap.id},{updatecnt:mypostmap.updatecnt
                                 ,newstatus:mypostmap.newstatus,status:mypostmap.status,ilastchkcnt:mypostmap.ilastchkcnt}
                                 ,function(err,docs){//更新
                             if(err) return console.err(err);
                             //console.log(docs);
-                            console.log('update success');
+                            console.log('update success,id:'+mypostmap.id);
                         });
                         //console.log("newstatus:"+mypostmap.newstatus); 
                         console.log('begin send mail');
@@ -344,7 +341,17 @@ setInterval(function(){
                                    continue;
                                     }
                                 console.log('bookman[j].mail'+bookman[j].mail+"mypostmap.length:"+mypostmap.status.length);
-                                smtpTransport.sendMail({
+								var strsubject='快递【'+mypostmap.id+'】更新了,'+mypostmap.newstatus;    
+								if(bookman[j].iwelcome==1){
+								  strsubject='您订阅了快递【'+mypostmap.id+'】提醒,我会为您提供最新的快递状态！'; 
+								  KDMAILS.update({id:mypostmap.id},{iwelcome:0}
+								  ,function(err,docs){//更新
+										if(err) return console.err(err);
+										//console.log(docs);
+										console.log('update  kdmails welcome success,id:'+mypostmap.id);
+									});
+								}								
+								smtpTransport.sendMail({
                                     sender:strmail, //发送邮件的地址
                                     to:bookman[j].mail, //发给谁
                                     subject:strsubject,//+mypostmap.newstatus, //主题
@@ -368,9 +375,17 @@ setInterval(function(){
                     //console.log(tmppost['mail']); 
                     //console.log(tmppost['status']); 
                   }
+				  else{ 
+					KD.update({id:mypostmap.id},{ilastchkcnt:mypostmap.ilastchkcnt}
+						,function(err,docs){//更新
+						if(err) return console.err(err);
+						//console.log(docs);
+						//console.log('update success');
+					});
+				}
         }
         
-    },mypostmapobj,autochk,strmail);
+    },mypostmapobj,autochk);
       
     
      }
@@ -402,7 +417,7 @@ setInterval(function(){
     tmppostmap.updatecnt=0;
     tmppostmap.ichknochgcnt=Date.now();
     tmppostmap.ilastchkcnt=0;
-    tmppostmap.iwelcome=1;
+    //tmppostmap.iwelcome=1;
     tmppostmap.debugcnt=0;
     mypostmapobj.context=tmppostmap;
     autochk=0;
@@ -412,24 +427,39 @@ setInterval(function(){
     search_kd(q ,function(err,result,postmap,strmail){
             if(err) return console.err(err);
             //console.dir(postmap);
-            if(typeof(strmail) != "undefined" && strmail.length>0 && result.length>0){
-                 postmap.save(function(err) {  //存储
-                 if (err) {
-                    console.log('postmap save failed');
-                 }
-                  console.log(' postmap save success');
-                });
-                
-                 var kdmail = new KDMAILS();
-                 kdmail.id=postmap.id;
-                 kdmail.mail=strmail;
-                 kdmail.save(function(err) {  //存储
-                 if (err) {
-                    console.log('kdmail save failed');
-                 }
-                  console.log('kdmail save success');
-                });
-            }
+            //if(typeof(strmail) != "undefined" && strmail.length>0 && result.length>0){
+			if(typeof(strmail) != "undefined" && strmail.length>0){
+			    KD.find({id:postmap.id},function(err,findkd){
+				console.log('find id'+findkd);
+						if(findkd.length ==0) {
+						     postmap.updatecnt=1;
+							//console.dir(postmap);
+							 postmap.save(function(err) {  //存储
+							 if (err) {
+								console.log('postmap save failed');
+							 }
+							  console.log(' postmap save success');
+							});							
+							
+						}
+						
+						KDMAILS.find({id:postmap.id,mail:strmail},function(err,findkdmails){
+							if(findkdmails.length ==0) {							
+								 var kdmail = new KDMAILS();
+								 kdmail.id=postmap.id;
+								 kdmail.mail=strmail;
+								 kdmail.iwelcome=1;
+								 kdmail.save(function(err) {  //存储
+								 if (err) {
+									console.log('kdmail save failed');
+								 }
+								  console.log('kdmail save success');
+								});
+							}
+						});	
+					});	
+					
+				}
             return next(null, result);
         }
         ,mypostmapobj,autochk);
@@ -927,6 +957,14 @@ nd = new Date(utc + (3600000*offset));
     
  
 
+ 
+   //所有消息都无法匹配时的fallback
+  webot.set( 'do_reg_mail', {
+    description: '发送: 邮箱地址 ',
+    pattern:  /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/,
+    //handler也可以是异步的
+    handler: do_reg_mail
+  });
  
    //所有消息都无法匹配时的fallback
   webot.set( 'search_allnum_kd', {

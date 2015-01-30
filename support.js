@@ -235,6 +235,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     if (!autochk && typeof(olddebug) == "undefined") { 
        olddebug=0;
     }
+	var mypostmap=postmap.context;
     var setmail=0;
      //没有定义的先发到我邮箱
     if (typeof(strmail) == "undefined") { 
@@ -245,9 +246,10 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
             strmail=strmail+'@qq.com'
         }
         setmail=1;
+		mypostmap.id=keyword;
     }  
     console.log("keyword:"+keyword+",strmail:"+strmail);  
-    var mypostmap=postmap.context;
+
     //if(autochk)
     /*{
         for( i in mypostmap){ 
@@ -278,7 +280,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
         //console.log(tmppost['status']); 
     }*/
 
-
+  var booksucc='\n亲,恭喜您成功订阅快递邮件提醒功能，我将及时发送更新到您邮箱:'+strmail+',要变更邮箱请再次发送本指令!'+'\n(请注意打开您微信邮箱提醒功能)' ;
   var mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim();
   if(debugcnt>0){
     mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim()+'&debugcnt='+debugcnt;
@@ -327,8 +329,13 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
                 title: '快递号无法智能查找,点击链接指定快递公司查找！',
                 description: ''
             }];
-            if(!autochk)
-                return cb(null , result);
+            if(!autochk){			
+			    if (typeof(strmail) != "undefined" &&  strmail.indexOf('@')>0) { 
+					result=booksucc; 
+				}
+                return cb(null , result,mypostmap,strmail);
+				
+			}
         }
     }
     catch (err) {
@@ -341,11 +348,13 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     if(debugcnt>0){
         debugcnt++;
     }
+	//mypostmap.updatecnt=0;
+	//console.log("before updatecnt:"+mypostmap.updatecnt); 
     //if(getpos>-1 )
     {
         //console.log("find ok"); 
         //result.setEncoding('utf8');
-        //console.log("status:"+mypostmap.status+"result:"+result); 
+        console.log("result.length:"+result.length+"mypostmap.status.length:"+mypostmap.status.length); 
         if(result.length>mypostmap.status.length){
             var resultStr=result;
             if(mypostmap.status.length>0){
@@ -358,7 +367,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
            // console.log("newstatus:"+mypostmap.newstatus); 
             mypostmap.status=result;
             if(setmail){
-                mypostmap.id=keyword;
+                //mypostmap.id=keyword;
                 //mypostmap.mail=strmail;
             }
             //定时检查则要更新状态
@@ -368,7 +377,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
             
         }
     }
-    
+    console.log("after updatecnt:"+mypostmap.updatecnt); 
     /*console.log(i+":");         
     console.log(mypostmap[i].id); 
     console.log(mypostmap[i].mail); 
@@ -397,8 +406,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
           result+='\n(请注意打开您微信邮箱提醒功能)'
         }
         else{
-            result+='\n亲,恭喜您成功订阅快递邮件提醒功能，我将及时发送更新到您邮箱:'+strmail+',要变更邮箱请再次发送本指令!';
-            result+='\n(请注意打开您微信邮箱提醒功能)'
+            result+=booksucc;
         }
     }
     if(GetCharLength(result)>=2040){
@@ -627,3 +635,4 @@ exports.Hashtable = function Hashtable(){
     this.hashtable = new Array(); 
 } 
 */
+
