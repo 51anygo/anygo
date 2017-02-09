@@ -42,7 +42,7 @@ require('./rules')(webot);
 require('./rules')(webot2);
 
 // 在环境变量提供的 $PORT 或 3000 端口监听
-var port = process.env.PORT || 8060;
+var port = process.env.PORT || 80;
 app.listen(port, function(){
   log("Listening on %s", port);
 });

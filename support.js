@@ -29,7 +29,8 @@ exports.geo2loc = function geo2loc(param, cb){
     }
   };
   log('querying amap for: [%s]', options.qs.region);
-
+  
+  
 
   //查询
   request.get(options, function(err, res, body){
@@ -215,6 +216,7 @@ function CutStr(str,len)   //elementID表示要进行处理的对象ID,len表示
  * @param  {String}   cb.result     查询结果
  */
 exports.search_kd = function(keyword, cb,postmap,autochk){
+ 
 //console.log("1.keyword:"+keyword);  
     var intime=new Date().getTime();
     keyword=keyword.replace("  "," ");    //去掉两个的空格
@@ -249,7 +251,9 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
 		mypostmap.id=keyword;
     }  
     console.log("keyword:"+keyword+",strmail:"+strmail);  
-
+   if(keyword == '88888888'){
+		return cb(null, '亲,这是测试用的快递单号！',mypostmap,strmail);
+	 }
     //if(autochk)
     /*{
         for( i in mypostmap){ 
@@ -280,7 +284,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
         //console.log(tmppost['status']); 
     }*/
 
-  var booksucc='\n亲,恭喜您成功订阅快递邮件提醒功能，我将及时发送更新到您邮箱:'+strmail+',要变更邮箱请再次发送本指令!'+'\n(请注意打开您微信邮箱提醒功能)' ;
+  var booksucc='' ;
   var mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim();
   if(debugcnt>0){
     mykdurl=myphpurl+'/kuaidi100/get.php?nu='+keyword.trim()+'&debugcnt='+debugcnt;
@@ -400,15 +404,7 @@ exports.search_kd = function(keyword, cb,postmap,autochk){
     }*/
     //console.log('timecount:%d,new Date().getTime(): %d',++timecount, new Date().getTime());
     //}
-    if(!autochk){
-        if(!setmail){
-          result+='\n亲,快递单号后面加空格加您的QQ号,我将会在快递变化时将状态发送到您邮箱!如输入:'+keyword+' 2669414011';
-          result+='\n(请注意打开您微信邮箱提醒功能)'
-        }
-        else{
-            result+=booksucc;
-        }
-    }
+    
     if(GetCharLength(result)>=2040){
     
        result = CutStr(result,2040);

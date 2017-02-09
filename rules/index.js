@@ -58,7 +58,21 @@ var generate_mongo_url = function(obj){
 var mongourl = generate_mongo_url(mongo);
  
 
-
+var test_kd_status = ['',
+  '2015-01-24 22:05:23 深圳市|收件|深圳市【深圳南头分部】，【（棕榈）】已揽收'
+  ,'2015-01-26 00:34:40 深圳市|到件|到深圳市【深圳上李朗分拨仓】 2015-01-25 23:04:45 深圳市|发件|深圳市【深圳南头分部】，正发往【深圳分拨中心】 2015-01-24 22:05:23 深圳市|收件|深圳市【深圳南头分部】，【（棕榈）】已揽收'
+  ,'2015-01-26 04:56:53 广州市|到件|到广州市【广州分拨中心】 2015-01-26 00:35:51 深圳市|发件|深圳市【深圳上李朗分拨仓】，正发往【广州分拨中心】 2015-01-26 00:34:40 深圳市|到件|到深圳市【深圳上李朗分拨仓】 2015-01-25 23:04:45 深圳市|发件|深圳市【深圳南头分部】，正发往【深圳分拨中心】 2015-01-24 22:05:23 深圳市|收件|深圳市【深圳南头分部】，【（棕榈）】已揽收'
+  ,'2015-01-28 12:30:36 石家庄市|签收|石家庄市【桥西五部】，拍照签收 已签收 2015-01-28 11:09:14 石家庄市|派件|石家庄市【桥西五部】，【任翔15369383573】正在派件 2015-01-28 10:25:27 石家庄市|到件|到石家庄市【桥西五部】 2015-01-28 08:08:26 石家庄市|发件|石家庄市【石家庄分拨中心】，正发往【桥西五部】 2015-01-27 15:15:20 石家庄市|到件|到石家庄市【石家庄分拨中心】 2015-01-26 04:57:47 广州市|发件|广州市【广州分拨中心】，正发往【石家庄分拨中心】 2015-01-26 04:56:53 广州市|到件|到广州市【广州分拨中心】 2015-01-26 00:35:51 深圳市|发件|深圳市【深圳上李朗分拨仓】，正发往【广州分拨中心】 2015-01-26 00:34:40 深圳市|到件|到深圳市【深圳上李朗分拨仓】 2015-01-25 23:04:45 深圳市|发件|深圳市【深圳南头分部】，正发往【深圳分拨中心】 2015-01-24 22:05:23 深圳市|收件|深圳市【深圳南头分部】，【（棕榈）】已揽收'
+  ];
+  
+var test_kd_new_status = ['',
+  '2015-01-24 22:05:23 深圳市|收件|深圳市【深圳南头分部】，【（棕榈）】已揽收'
+  ,'2015-01-26 00:34:40 深圳市|到件|到深圳市【深圳上李朗分拨仓】'
+  ,'2015-01-26 04:56:53 广州市|到件|到广州市【广州分拨中心】'
+  ,'2015-01-28 12:30:36 石家庄市|签收|石家庄市【桥西五部】，拍照签收 已签收'
+  ];
+  
+  
 
 
 var mongoose = require('mongoose');  
@@ -91,6 +105,18 @@ var KDMAILSSchema = new Schema({
   ,iwelcome  : {type : Number}
 });
 
+var KDUSERSchema = new Schema({
+   id        : {type : String,index:true}
+  ,openid    : {type : String,index:true}
+  ,iwelcome  : {type : Number}
+  ,debugcnt  : {type : Number}
+});
+
+
+var USERMAILSchema = new Schema({
+   openid    : {type : String,index:true}
+  ,mail      : {type : String,index:true}
+});
 
 
 
@@ -101,14 +127,25 @@ var KD = mongoose.model("KD"); //获得model实例
 
 mongoose.model("KDMAILS", KDMAILSSchema);
 
-
 var KDMAILS = mongoose.model("KDMAILS"); //获得model实例
 
+mongoose.model("KDUSER", KDUSERSchema);
+
+var KDUSER = mongoose.model("KDUSER"); //获得model实例
 
 
-var testkdnum='280304922059'
+mongoose.model("USERMAIL", USERMAILSchema);
+
+
+var USERMAIL = mongoose.model("USERMAIL"); //获得model实例
+
+
+var issendmail = true;
+//280304922059
+var examkdnum='';
+var testkdnum='88888888';
 var testinfo = new KD();
-testinfo.id=testkdnum;    
+testinfo.id=examkdnum;    
 //testinfo.mail = '41473064@qq.com';
 testinfo.status='';
 testinfo.newstatus='';
@@ -119,38 +156,39 @@ testinfo.debugcnt=0;
 
 
 var kdmail = new KDMAILS();
-kdmail.id=testkdnum;    
+kdmail.id=examkdnum;    
 kdmail.iwelcome=1;  
 kdmail.mail = '41473064@qq.com';
 
+if(examkdnum.length>0) {
+
+    KD.remove({id:testinfo.id},function(err,docs){//删除id为4的记录
+         console.log(docs);
+         console.log('remove success');
+         testinfo.save(function(err) {  //存储
+         if (err) {
+            console.log('save failed');
+         }
+          console.log('save success');
+        });
 
 
-KD.remove({id:testinfo.id},function(err,docs){//删除id为4的记录
-     console.log(docs);
-     console.log('remove success');
-     testinfo.save(function(err) {  //存储
-     if (err) {
-        console.log('save failed');
-     }
-      console.log('save success');
     });
 
+    KDMAILS.remove({id:kdmail.id},function(err,docs){//删除id为4的记录
+         console.log(docs);
+         console.log('remove success');
+         kdmail.save(function(err) {  //存储
+         if (err) {
+            console.log('save failed');
+         }
+          console.log('save success');
+        });
 
-});
 
-KDMAILS.remove({id:kdmail.id},function(err,docs){//删除id为4的记录
-     console.log(docs);
-     console.log('remove success');
-     kdmail.save(function(err) {  //存储
-     if (err) {
-        console.log('save failed');
-     }
-      console.log('save success');
     });
 
-
-});
-    
+}  
 /*
 KD.find({id:4},function(err,docs){//查询id为4的记录
      console.log(docs);
@@ -258,7 +296,7 @@ setInterval(function(){
            continue;
         }
 		    
-        if((Date.now()-postmap[i].ilastchkcnt) < 5*60*1000){
+        if(postmap[i].id!=testkdnum && (Date.now()-postmap[i].ilastchkcnt) < 5*60*1000){
             //console.log("check freq too much!");  
             continue;            
         }
@@ -308,7 +346,7 @@ setInterval(function(){
                      
                     //tomail=mypostmap.mail;    
                     console.log("id:"+mypostmap.id+',updatecnt:'+mypostmap.updatecnt);         
-                    if(mypostmap.updatecnt>0){
+                    if(mypostmap.id==testkdnum || mypostmap.updatecnt>0){
                         //mypostmap.ichknochgcnt=0;
                         //strsubject=clearString(strsubject);
                         //console.log("strsubject:"+strsubject); 
@@ -331,11 +369,11 @@ setInterval(function(){
                             console.log('update success,id:'+mypostmap.id);
                         });
                         //console.log("newstatus:"+mypostmap.newstatus); 
-                        console.log('begin send mail');
-                        KDMAILS.find({id:mypostmap.id},function(err,bookman){
+                        /* console.log('begin send mail');
+                       KDMAILS.find({id:mypostmap.id},function(err,bookman){
                             if(err) return console.err(err);
                             //console.dir(postmap);
-                            console.log('begin send mail to bookman');
+                            console.log('begin send mail to mail bookman');
                             for( j in bookman){    
                                  if (typeof(bookman[j]) == "undefined") { 
                                    continue;
@@ -350,7 +388,8 @@ setInterval(function(){
 										//console.log(docs);
 										console.log('update  kdmails welcome success,id:'+mypostmap.id);
 									});
-								}								
+								}	
+                                if (issendmail)
 								smtpTransport.sendMail({
                                     sender:strmail, //发送邮件的地址
                                     to:bookman[j].mail, //发给谁
@@ -369,6 +408,85 @@ setInterval(function(){
                                 });
                             }
                         });
+                        */
+                        KDUSER.find({id:mypostmap.id},function(err,bookman){
+                            if(err) return console.err(err);
+							if(bookman.length==0){
+									 KD.remove({id:mypostmap.id}
+										  ,function(err,docs){//更新
+												if(err) return console.err(err);
+												//console.log(docs);
+												console.log('kd remove success,id:'+mypostmap.id);
+											});
+							  }
+							  else {
+								console.log('begin send mail to openid bookman');
+							  }
+                            //console.dir(postmap);
+                            
+                            for( j in bookman){    
+                                 if (typeof(bookman[j]) == "undefined") { 
+                                    continue;
+                                    }
+                                  
+                                USERMAIL.find({openid:bookman[j].openid},function(err,mybookman){ 
+                                    for( k in mybookman){ 
+                                            if (typeof(mybookman[k]) == "undefined") { 
+                                                continue;
+                                            }                                
+                                            var tmpbookman=bookman[j];    
+                                            var email_title=mypostmap.newstatus;	
+                                            var email_body=mypostmap.status;											
+											if(tmpbookman.debugcnt>0){
+											 console.log('tmpbookman.id:'+tmpbookman.id+'tmpbookman.openid:'+tmpbookman.openid+'tmpbookman.debugcnt:'+tmpbookman.debugcnt+'tmpbookman.iwelcome:'+tmpbookman.iwelcome);
+											   email_title=test_kd_new_status[tmpbookman.debugcnt];
+											   email_body=test_kd_status[tmpbookman.debugcnt];
+											}
+                                            var strsubject='快递【'+tmpbookman.id+'】更新了,'+email_title;                                                                          
+                                            if(tmpbookman.iwelcome==1){
+                                              strsubject='您订阅了快递【'+tmpbookman.id+'】提醒,我会为您提供最新的快递状态！';
+                                            }	
+											var newdebugcnt=0;
+											if(tmpbookman.id=testkdnum){
+												newdebugcnt=tmpbookman.debugcnt+1;
+												if(newdebugcnt>(test_kd_new_status.length-1)){
+													 KDUSER.remove({id:tmpbookman.id,openid:tmpbookman.openid}
+														  ,function(err,docs){//更新
+																if(err) return console.err(err);
+																//console.log(docs);
+																console.log('kduser remove success,id:'+tmpbookman.id+'tmpbookman.openid:'+tmpbookman.openid);
+															});
+												  }
+												  
+											 }
+											 KDUSER.update({id:tmpbookman.id,openid:tmpbookman.openid},{iwelcome:0,debugcnt:newdebugcnt}
+                                              ,function(err,docs){//更新
+                                                    if(err) return console.log(err);
+                                                    //console.log(docs);
+                                                    console.log('update  user mail welcome success,id:'+tmpbookman.id);
+                                                });
+                                            if (issendmail)
+                                            smtpTransport.sendMail({
+                                                sender:strmail, //发送邮件的地址
+                                                to:mybookman[k].mail, //发给谁
+                                                subject:strsubject,//+tmpbookman.newstatus, //主题
+                                                body:email_body+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
+                                                //html:'<p>hello</p>', //如果要发送html
+                                                //attachments: null //如果要发送附件
+                                            },
+                                            //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
+                                            function(error,success){
+                                                if(!error){
+                                                        console.log('message success');
+                                                    }else{
+                                                        console.log('failed'+error);
+                                                    }
+                                                });
+                                            }
+                                        } 
+                                    );
+                                }
+                            });                                                 
                    
                     
                     //console.log(mypostmap.status); 
@@ -393,13 +511,114 @@ setInterval(function(){
     
 },chkstatustime);
 
+function do_test_kd(info, next){
+    // pattern的解析结果将放在param里
+    var uid =  info.uid;
+    var q =  info.text;
+    console.log('searching: '+ q);
+    console.log('open id: '+ uid);     
+
+        
+    USERMAIL.find({openid:uid},function(err,findusermail){
+		console.log('find usermail id'+findusermail);
+		if(findusermail.length > 0) {
+			 //postmap.updatecnt=1;
+			//console.dir(postmap);
+			 var tmpkduser = new KDUSER();
+			 tmpkduser.id=testkdnum;   
+			 tmpkduser.openid=uid;
+			 tmpkduser.iwelcome=1;
+			 tmpkduser.debugcnt=1;
+			 tmpkduser.save(function(err) {  //存储
+			 if (err) {
+				console.log('tmpkduser save failed');
+			 }
+			  console.log(' tmpkduser save success');
+			  
+			});	
+
+			KD.find({id:testkdnum},function(err,findkd){
+				console.log('find findkd id'+findkd);
+				if(findkd.length == 0) {
+					 //postmap.updatecnt=1;
+					//console.dir(postmap);
+					var tmppostmap = new KD();
+					tmppostmap.id=testkdnum;    
+					//tmppostmap.mail = '';
+					tmppostmap.status='';
+					tmppostmap.newstatus='';
+					tmppostmap.updatecnt=1;
+					tmppostmap.ichknochgcnt=Date.now();
+					tmppostmap.ilastchkcnt=0;
+					tmppostmap.debugcnt=0;
+					tmppostmap.save(function(err) {  //存储
+					 if (err) {
+						console.log('tmppostmap save failed');
+					 }
+					  console.log(' tmppostmap save success');
+					  
+					});							
+					
+				}
+			});	 
+            var result='';			
+			result+='\n亲,测试的快递单号的最新状态将发送到您邮箱:'+findusermail[0].mail;
+			result+='\n(请注意打开您微信邮箱提醒功能)';
+			return  next(null, result);
+		}
+        else
+        {
+            return  next(null, '请先绑定您的QQ邮箱，请直接回复邮箱地址如:12345678@qq.com');
+        }
 
 
+    });
+
+
+    
+}
+  
+
+function do_set_mail(info, next){
+    // pattern的解析结果将放在param里
+    var uid =  info.uid;
+    var q =  info.text;
+    console.log('searching: '+ q);
+    console.log('open id: '+ uid);
+        
+    var usermail = new USERMAIL();
+    usermail.openid=uid;    
+    usermail.mail = q;
+        
+    USERMAIL.remove({openid:uid},function(err,docs){//删除id为4的记录
+         console.log(docs);
+         console.log('remove  usermail success');
+         if(usermail.mail.length>1) {
+             usermail.save(function(err) {  //存储
+             if (err) {
+                console.log('save usermail failed');
+             }
+              console.log('save usermail success');
+              return  next(null, '恭喜您,邮箱绑定成功,直接发送快递单号,将自动订阅快递状态,要取消绑定请直接回复@号');
+            });
+        }
+        else
+        {
+            return  next(null, '恭喜您,邮箱取消绑定成功，要继续绑定请直接回复邮箱地址');
+        }
+
+
+    });
+
+
+    
+}
   
    function do_search_allnum_kd(info, next){
     // pattern的解析结果将放在param里
     var q =  info.text;
     log('searching: ', q);
+    var uid=info.uid;
 //console.log(q);  
     // 从某个地方搜索到数据...
     var mypostmapobj=new Object();  
@@ -421,50 +640,132 @@ setInterval(function(){
     tmppostmap.debugcnt=0;
     mypostmapobj.context=tmppostmap;
     autochk=0;
+    
+   
     //var tmp=13;
     //console.log("index:"+mypostmapobj.context[0].id); 
     //console.log("q:"+q);
-    search_kd(q ,function(err,result,postmap,strmail){
-            if(err) return console.err(err);
+    
+    search_kd(q ,function(err,result,postmap,strbookmail){
+            //var booksucc='\n亲,恭喜您成功订阅快递邮件提醒功能，我将及时发送更新到您邮箱:'+strbookmail+',要变更邮箱请再次发送本指令!'+'\n(请注意打开您微信邮箱提醒功能)' ;
+            booksucc='\n亲,要订阅快递状态，需要绑定您的邮箱地址，直接回复邮箱地址即可！';
+            if(err) return console.err(err); 
             //console.dir(postmap);
-            //if(typeof(strmail) != "undefined" && strmail.length>0 && result.length>0){
-			if(typeof(strmail) != "undefined" && strmail.length>0){
-			    KD.find({id:postmap.id},function(err,findkd){
-				console.log('find id'+findkd);
-						if(findkd.length ==0) {
-						     postmap.updatecnt=1;
-							//console.dir(postmap);
-							 postmap.save(function(err) {  //存储
-							 if (err) {
-								console.log('postmap save failed');
-							 }
-							  console.log(' postmap save success');
-							});							
-							
-						}
-						
-						KDMAILS.find({id:postmap.id,mail:strmail},function(err,findkdmails){
-							if(findkdmails.length ==0) {							
-								 var kdmail = new KDMAILS();
-								 kdmail.id=postmap.id;
-								 kdmail.mail=strmail;
-								 kdmail.iwelcome=1;
-								 kdmail.save(function(err) {  //存储
+            //if(typeof(strbookmail) != "undefined" && strbookmail.length>0 && result.length>0){
+			//if(typeof(strbookmail) != "undefined" && strbookmail.length>0){
+            if(false){
+                 /*
+                 KD.find({id:postmap.id},function(err,findkd){
+                        //console.log('find findkd id'+findkd);
+                        if(findkd.length == 0) {
+                             //postmap.updatecnt=1;
+                            //console.dir(postmap);
+                            tmppostmap.save(function(err) {  //存储
+                             if (err) {
+                                console.log('tmppostmap save failed');
+                             }
+                              console.log(' tmppostmap save success');
+                              
+                            });							
+                            
+                        }
+                    });	                    
+                    
+                    KDMAILS.find({id:postmap.id},function(err,findkdmail){
+                        console.log('find kduser id'+findkdmail);
+                        if(findkdmail.length > 0) {
+                             //postmap.updatecnt=1;
+                            //console.dir(postmap);
+                            var tmpkdmail = new KDMAILS();
+                            tmpkdmail.id=postmap.id;   
+                            tmpkdmail.mail=strbookmail;
+                            tmpkdmail.iswelcome=1;
+                            tmpkdmail.save(function(err) {  //存储
+                             if (err) {
+                                console.log('tmpkdmail save failed');
+                             }
+                              console.log(' tmpkdmail save success');
+                            });							
+                            
+                        }
+                    });
+                     */
+			        result+=booksucc;
+                    return next(null, result);
+                
+            }
+            else {
+                  USERMAIL.find({openid:uid},function(err,findusermail){
+                    console.log('find usermail id'+findusermail);
+                    if(findusermail.length > 0) {
+                         //postmap.updatecnt=1;
+                        //console.dir(postmap);
+						 KDUSER.find({openid:uid},function(err,findkduser){
+							console.log('find kduser id'+findkduser);
+							if(findkduser.length == 0) {
+								 var tmpkduser = new KDUSER();
+								 tmpkduser.id=q;   
+								 tmpkduser.openid=uid;
+								 tmpkduser.iwelcome=0;
+								 tmpkduser.save(function(err) {  //存储
 								 if (err) {
-									console.log('kdmail save failed');
+									console.log('tmpkduser save failed');
 								 }
-								  console.log('kdmail save success');
-								});
+								  console.log(' tmpkduser save success');
+								  var strsubject='您订阅了快递【'+postmap.id+'】提醒,我会为您提供最新的快递状态！';
+								  var email_body = result;
+								    if (issendmail)
+								    smtpTransport.sendMail({
+									sender:strmail, //发送邮件的地址
+									to:findusermail[0].mail, //发给谁
+									subject:strsubject,//+tmpbookman.newstatus, //主题
+									body:email_body+'\n'+'提醒来自微信生活服务小助手！', //发送的内容
+									//html:'<p>hello</p>', //如果要发送html
+									//attachments: null //如果要发送附件
+								    },
+								    //回调函数，用户判断发送是否成功，如果失败，输出失败原因。
+								    function(error,success){
+									if(!error){
+										console.log('message success');
+									    }else{
+										console.log('failed'+error);
+									    }
+									});
+								});	  
 							}
-						});	
-					});	
-					
-				}
-            return next(null, result);
+                        });	
+
+                        KD.find({id:postmap.id},function(err,findkd){
+                            //console.log('find findkd id'+findkd);
+                            if(findkd.length == 0) {
+                                 //postmap.updatecnt=1;
+                                //console.dir(postmap);
+                                tmppostmap.save(function(err) {  //存储
+                                 if (err) {
+                                    console.log('tmppostmap save failed');
+                                 }
+                                  console.log(' tmppostmap save success');
+                                  
+                                });							
+                                
+                            }
+                        });	  
+                        result+='\n亲,快递单号的最新状态将发送到您邮箱:'+findusermail[0].mail;
+                        result+='\n(请注意打开您微信邮箱提醒功能)';
+                       
+                    }
+                    else {
+                        result+=booksucc;
+                        //result+='\n(请注意打开您微信邮箱提醒功能)';
+                    }
+                    return next(null, result);
+                });	
+            }
+            
         }
         ,mypostmapobj,autochk);
     //return search_kd(q ,next,mypostmapobj,autochk);
-  }
+ }
 //console.log('5')
 
 
@@ -501,7 +802,7 @@ module.exports = exports = function(webot){
     description: '获取使用帮助，发送 help',
     pattern: function(info) {
       //首次关注时,会收到subscribe event
-      return info.is('event') && info.param.event === 'subscribe' || reg_help.test(info.text);
+      return info.is('event') && info.param.event == 'subscribe' || reg_help.test(info.text);
     },
     handler: function(info){
       var reply = {
@@ -511,16 +812,16 @@ module.exports = exports = function(webot){
         description: [
           '建议你试试这几条指令:',
    //'1. kd+空格+单号 : 查询快递状态',
-'1. 快递号码 : 查询快递状态',
+'1. 快递号码 : 查询快递状态'
 //'2. dg+空格+歌名 : 点歌',
-'2. 歌曲名称 : 点歌',
-'3. fy+空格+中文内容 : 中译英',
-            '4. game : 玩玩猜数字的游戏吧',
-            '6. s+空格+关键词 : 我会帮你百度搜索喔',
-            '6. 发送你的经纬度',
-            '7. 重看本指令请回复help或问号',
-            '8. 更多指令请回复more',
-'9. 商务合作请微信我langdalang001'
+//'2. 歌曲名称 : 点歌',
+//'3. fy+空格+中文内容 : 中译英',
+           // '4. game : 玩玩猜数字的游戏吧',
+          //  '6. s+空格+关键词 : 我会帮你百度搜索喔',
+          //  '6. 发送你的经纬度',
+          //  '7. 重看本指令请回复help或问号',
+         //   '8. 更多指令请回复more',
+//'9. 商务合作请微信我langdalang001'
         ].join('\n')
       };
       // 返回值如果是list，则回复图文消息列表
@@ -528,7 +829,7 @@ module.exports = exports = function(webot){
     }
   });
 
-
+/*
   // 更简单地设置一条规则
   webot.set(/^more$/i, function(info){
     var reply = _.chain(webot.gets()).filter(function(rule){
@@ -565,7 +866,7 @@ module.exports = exports = function(webot){
     handler: '你好,{1}'
   });
 
-
+*/
 // function to calculate local time
 
 
@@ -620,6 +921,7 @@ nd = new Date(utc + (3600000*offset));
 
 
 }
+
 
 
   // 支持一次性加多个（方便后台数据库存储规则）
@@ -959,13 +1261,20 @@ nd = new Date(utc + (3600000*offset));
 
  
    //所有消息都无法匹配时的fallback
-  webot.set( 'do_reg_mail', {
+  webot.set( 'do_set_mail', {
     description: '发送: 邮箱地址 ',
     pattern:  /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/,
     //handler也可以是异步的
-    handler: do_reg_mail
+    handler: do_set_mail
   });
- 
+
+  
+  webot.set( 'do_test_kd', {
+    description: '发送: 测试 ',
+    pattern:  /测试|test/,
+    //handler也可以是异步的
+    handler: do_test_kd
+  });
    //所有消息都无法匹配时的fallback
   webot.set( 'search_allnum_kd', {
     description: '发送: 全部数字 ',
